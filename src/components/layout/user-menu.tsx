@@ -3,11 +3,17 @@ import { useRouter } from '@tanstack/react-router'
 import { ChevronDown, LogOut } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { logout, sessionQueryOptions } from '@/features/auth/api'
+import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 export function UserMenu() {
   const { data: user } = useSuspenseQuery(sessionQueryOptions)
   const [open, setOpen] = useState(false)
+
+  //state for logout confirmation dialog
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   const ref = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -71,14 +77,37 @@ export function UserMenu() {
           <button
             type="button"
             role="menuitem"
-            disabled={logoutMutation.isPending}
-            onClick={() => logoutMutation.mutate()}
+            onClick={() => {
+              setOpen(false) //close the dropdown
+              setConfirmOpen(true) //then open the popup
+            }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
           >
             <LogOut className="size-4" /> Sign out
           </button>
         </div>
       )}
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Sign out?"
+        description="You'll need to sign in again to access the dashboard."
+        className="max-w-sm"
+      >
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            disabled={logoutMutation.isPending}
+            onClick={() => logoutMutation.mutate()}
+          >
+            {logoutMutation.isPending ? 'Signing out…' : 'Sign out'}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   )
 }
