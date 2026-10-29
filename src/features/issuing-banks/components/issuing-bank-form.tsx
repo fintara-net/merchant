@@ -43,7 +43,7 @@ export function IssuingBankForm({
         <Input
           id="bank-name"
           autoFocus
-          placeholder="e.g. Nabil Bank Limited"
+          placeholder="Enter bank name"
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? 'bank-name-error' : undefined}
           {...form.register('name')}
@@ -59,7 +59,7 @@ export function IssuingBankForm({
         <Label htmlFor="swift-code">SWIFT code</Label>
         <Input
           id="swift-code"
-          placeholder="e.g. NARBNPKA"
+          placeholder="Enter SWIFT code"
           maxLength={11}
           autoComplete="off"
           spellCheck={false}
