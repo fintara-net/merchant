@@ -5,15 +5,20 @@ import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
+import { Select } from '@/components/ui/select'
 import { PERMISSIONS, requirePermission, usePermissions } from '@/features/permissions'
 import {
   UserForm,
   UsersTable,
+  USER_TYPE_LABELS,
+  USER_TYPES,
   usersSearchSchema,
   useUsers,
   type ManagedUser,
   type UserFormValues,
+  type UserType,
 } from '@/features/users'
 
 export const Route = createFileRoute('/_app/users/')({
@@ -78,10 +83,11 @@ function UsersPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const close = () => setDialog(null)
 
+  const filtered = search.type ? users.filter((u) => u.userType === search.type) : users
   const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
-  const pageCount = Math.max(1, Math.ceil(users.length / pageSize))
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const page = Math.min(search.page ?? 1, pageCount)
-  const pageUsers = users.slice((page - 1) * pageSize, page * pageSize)
+  const pageUsers = filtered.slice((page - 1) * pageSize, page * pageSize)
   const activeCount = users.filter((u) => u.status === 'active' && !u.locked).length
 
   const editing = dialog?.mode === 'edit' ? dialog.user : null
@@ -97,7 +103,14 @@ function UsersPage() {
     }
     if (errors.username || errors.email) return errors
 
-    if (editing) updateUser(editing.id, values)
+    // Type and organisation are locked after creation, whatever the form sends
+    if (editing)
+      updateUser(editing.id, {
+        ...values,
+        userType: editing.userType,
+        bankId: editing.bankId ?? '',
+        merchantId: editing.merchantId ?? '',
+      })
     else addUser(values)
     close()
   }
@@ -134,6 +147,35 @@ function UsersPage() {
       }
       actions={newUserButton}
     >
+      {users.length > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <Label htmlFor="user-type-filter" className="text-sm text-muted">
+            User type
+          </Label>
+          <Select
+            id="user-type-filter"
+            className="w-44"
+            value={search.type ?? ''}
+            onChange={(e) =>
+              void navigate({
+                search: (prev) => ({
+                  ...prev,
+                  type: (e.target.value || undefined) as UserType | undefined,
+                  page: undefined,
+                }),
+              })
+            }
+          >
+            <option value="">All types</option>
+            {USER_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {USER_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+
       <UsersTable
         users={pageUsers}
         startIndex={(page - 1) * pageSize}
@@ -157,7 +199,7 @@ function UsersPage() {
         <Pagination
           page={page}
           pageSize={pageSize}
-          total={users.length}
+          total={filtered.length}
           onPageChange={(p) => void navigate({ search: (prev) => ({ ...prev, page: p }) })}
           onPageSizeChange={(size) =>
             void navigate({ search: (prev) => ({ ...prev, pageSize: size, page: undefined }) })
@@ -180,7 +222,8 @@ function UsersPage() {
               ? {
                   ...editing,
                   middleName: editing.middleName ?? '',
-                  bankCode: editing.bankCode ?? '',
+                  bankId: editing.bankId ?? '',
+                  merchantId: editing.merchantId ?? '',
                 }
               : undefined
           }

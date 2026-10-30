@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableEmpty, TBody, Td, Th, THead } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { useOrganisationName } from '../organisation'
 import { fullName, USER_TYPE_LABELS, type ManagedUser } from '../schemas'
 import { UserStatusBadge } from './user-status-badge'
 
@@ -34,6 +35,7 @@ export function UsersTable({
   actions,
   emptyAction,
 }: UsersTableProps) {
+  const organisationName = useOrganisationName()
   const selectedOnPage = users.filter((u) => selected.has(u.id)).length
   const allSelected = users.length > 0 && selectedOnPage === users.length
 
@@ -71,7 +73,7 @@ export function UsersTable({
         <Th>Phone Number</Th>
         <Th>Email ID</Th>
         <Th>User Type</Th>
-        <Th>Bank Code</Th>
+        <Th>Organisation</Th>
         <Th>Status</Th>
         {actions && (
           <Th className="sticky right-0 bg-accent shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]">
@@ -119,7 +121,9 @@ export function UsersTable({
               {u.email}
             </Td>
             <Td>{USER_TYPE_LABELS[u.userType]}</Td>
-            <Td>{u.bankCode ?? '—'}</Td>
+            <Td className="max-w-36 truncate" title={organisationName(u)}>
+              {organisationName(u)}
+            </Td>
             <Td>
               <UserStatusBadge user={u} />
             </Td>

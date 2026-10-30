@@ -17,7 +17,8 @@ interface UsersState {
 const toUser = (values: UserFormValues) => ({
   ...values,
   middleName: values.middleName || null,
-  bankCode: values.bankCode || null,
+  bankId: values.bankId || null,
+  merchantId: values.merchantId || null,
 })
 
 export const useUsers = create<UsersState>()((set) => ({

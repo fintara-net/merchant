@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ShieldAlert } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
@@ -6,8 +7,9 @@ import { Input, Label } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useIssuingBanks } from '@/features/issuing-banks'
+import { useMerchants } from '@/features/merchants'
+import { useOrganisationName } from '../organisation'
 import {
-  BANK_USER_TYPES,
   USER_TYPE_LABELS,
   USER_TYPES,
   userFormSchema,
@@ -17,7 +19,7 @@ import {
 
 interface UserFormProps {
   defaultValues?: UserFormInput
-  /** Username can't change once created */
+  /** Username, user type and organisation can't change once created */
   isEdit?: boolean
   submitLabel: string
   /** Return field errors to block saving, e.g. a duplicate username */
@@ -32,8 +34,9 @@ const EMPTY: UserFormInput = {
   lastName: '',
   phoneNumber: '',
   email: '',
-  userType: 'member-bank-user',
-  bankCode: '',
+  userType: 'bank',
+  bankId: '',
+  merchantId: '',
   status: 'active',
 }
 
@@ -44,14 +47,19 @@ export function UserForm({
   onSubmit,
   onCancel,
 }: UserFormProps) {
-  const banks = useIssuingBanks((s) => s.banks)
+  // Only active organisations can get new users
+  const activeBanks = useIssuingBanks((s) => s.banks).filter((b) => b.status === 'active')
+  const activeMerchants = useMerchants((s) => s.merchants).filter((m) => m.status === 'active')
+  const organisationName = useOrganisationName()
   const form = useForm<UserFormInput, unknown, UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues,
   })
   const { errors, isSubmitting } = form.formState
-  const userType = useWatch({ control: form.control, name: 'userType' })
-  const needsBank = BANK_USER_TYPES.includes(userType)
+  const [userType, bankId, merchantId] = useWatch({
+    control: form.control,
+    name: ['userType', 'bankId', 'merchantId'],
+  })
 
   return (
     <form
@@ -118,34 +126,89 @@ export function UserForm({
             {...form.register('phoneNumber')}
           />
         </Field>
-        <Field id="user-email" label="Email" error={errors.email}>
-          <Input
-            id="user-email"
-            type="email"
-            placeholder="Enter email address"
-            aria-invalid={!!errors.email}
-            {...form.register('email')}
-          />
-        </Field>
-        <Field id="user-type" label="User type" error={errors.userType}>
-          <Select id="user-type" {...form.register('userType')}>
-            {USER_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {USER_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field id="user-bank" label="Bank" optional={!needsBank} error={errors.bankCode}>
-          <Select id="user-bank" aria-invalid={!!errors.bankCode} {...form.register('bankCode')}>
-            <option value="">Select a bank</option>
-            {banks.map((b) => (
-              <option key={b.id} value={b.swiftCode}>
-                {b.name} ({b.swiftCode})
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <div className="sm:col-span-2">
+          <Field id="user-email" label="Email" error={errors.email}>
+            <Input
+              id="user-email"
+              type="email"
+              placeholder="Enter email address"
+              aria-invalid={!!errors.email}
+              {...form.register('email')}
+            />
+          </Field>
+        </div>
+
+        {isEdit ? (
+          // Type and organisation are fixed once created, so a user can't be
+          // moved to another bank and see its data
+          <>
+            <Field id="user-type" label="User type" hint="Can't be changed after creation.">
+              <Input
+                id="user-type"
+                readOnly
+                value={USER_TYPE_LABELS[userType]}
+                className="bg-accent text-muted"
+              />
+            </Field>
+            <Field id="user-organisation" label="Organisation">
+              <Input
+                id="user-organisation"
+                readOnly
+                value={organisationName({ userType, bankId, merchantId })}
+                className="bg-accent text-muted"
+              />
+            </Field>
+          </>
+        ) : (
+          <>
+            <Field id="user-type" label="User type" error={errors.userType}>
+              <Select id="user-type" {...form.register('userType')}>
+                {USER_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {USER_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            {userType === 'bank' && (
+              <Field id="user-bank" label="Issuing bank" error={errors.bankId}>
+                <Select id="user-bank" aria-invalid={!!errors.bankId} {...form.register('bankId')}>
+                  <option value="">Select a bank</option>
+                  {activeBanks.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+
+            {userType === 'merchant' && (
+              <Field id="user-merchant" label="Merchant" error={errors.merchantId}>
+                <Select
+                  id="user-merchant"
+                  aria-invalid={!!errors.merchantId}
+                  {...form.register('merchantId')}
+                >
+                  <option value="">Select a merchant</option>
+                  {activeMerchants.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+
+            {userType === 'super-admin' && (
+              <div className="flex gap-2 self-end rounded-lg bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+                <ShieldAlert className="size-4 shrink-0" />
+                Full access to all banks, merchants and users.
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <Controller

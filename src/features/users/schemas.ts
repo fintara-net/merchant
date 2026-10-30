@@ -1,14 +1,18 @@
 import { z } from 'zod'
 
-// Placeholder lists until the real API defines them — change values/labels here only.
-export const USER_TYPES = ['admin', 'member-bank-user'] as const
+/**
+ * Who the user works for decides which data they can see:
+ * - super-admin: Fintara staff, sees everything, no organisation
+ * - bank: belongs to one issuing bank, sees only that bank's transactions
+ * - merchant: belongs to one merchant, sees only that merchant's transactions
+ */
+export const USER_TYPES = ['super-admin', 'bank', 'merchant'] as const
 export type UserType = (typeof USER_TYPES)[number]
 export const USER_TYPE_LABELS: Record<UserType, string> = {
-  admin: 'Admin',
-  'member-bank-user': 'Member Bank User',
+  'super-admin': 'Super Admin',
+  bank: 'Bank',
+  merchant: 'Merchant',
 }
-/** User types that must belong to an issuing bank */
-export const BANK_USER_TYPES: readonly UserType[] = ['member-bank-user']
 
 export const USER_STATUSES = ['active', 'inactive'] as const
 export type UserStatus = (typeof USER_STATUSES)[number]
@@ -22,9 +26,12 @@ export interface ManagedUser {
   lastName: string
   phoneNumber: string
   email: string
+  /** Can't change after the user is created */
   userType: UserType
-  /** SWIFT code of the user's issuing bank; null for non-bank users */
-  bankCode: string | null
+  /** Issuing bank id; set only for bank users */
+  bankId: string | null
+  /** Merchant id; set only for merchant users */
+  merchantId: string | null
   status: UserStatus
   /** Locked users can't sign in until unlocked (separate from active/inactive) */
   locked: boolean
@@ -49,17 +56,31 @@ export const userFormSchema = z
     email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email')),
     userType: z.enum(USER_TYPES),
     /** '' when no bank is selected */
-    bankCode: z.string(),
+    bankId: z.string(),
+    /** '' when no merchant is selected */
+    merchantId: z.string(),
     status: z.enum(USER_STATUSES),
   })
-  .refine((v) => !BANK_USER_TYPES.includes(v.userType) || v.bankCode !== '', {
-    path: ['bankCode'],
+  .refine((v) => v.userType !== 'bank' || v.bankId !== '', {
+    path: ['bankId'],
     message: "Select the user's bank",
   })
+  .refine((v) => v.userType !== 'merchant' || v.merchantId !== '', {
+    path: ['merchantId'],
+    message: "Select the user's merchant",
+  })
+  // Keep only the link that matches the type, so a user can never end up
+  // tied to both a bank and a merchant
+  .transform((v) => ({
+    ...v,
+    bankId: v.userType === 'bank' ? v.bankId : '',
+    merchantId: v.userType === 'merchant' ? v.merchantId : '',
+  }))
 export type UserFormInput = z.input<typeof userFormSchema>
 export type UserFormValues = z.output<typeof userFormSchema>
 
 export const usersSearchSchema = z.object({
+  type: z.enum(USER_TYPES).optional().catch(undefined),
   page: z.number().int().positive().optional().catch(undefined),
   pageSize: z.number().int().positive().max(100).optional().catch(undefined),
 })
