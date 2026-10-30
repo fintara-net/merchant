@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { logout, sessionQueryOptions } from '@/features/auth/api'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { USER_TYPE_LABELS } from '@/features/users/schemas'
 import { cn } from '@/lib/utils'
 
 export function UserMenu() {
@@ -55,7 +56,9 @@ export function UserMenu() {
         </span>
         <span className="hidden min-w-0 sm:block">
           <span className="block max-w-48 truncate text-sm font-semibold">{user.name}</span>
-          <span className="block max-w-48 truncate text-xs text-muted">{user.email}</span>
+          <span className="block max-w-48 truncate text-xs text-muted">
+            {user.organisation?.name ?? user.email}
+          </span>
         </span>
         <ChevronDown
           className={cn(
@@ -70,9 +73,13 @@ export function UserMenu() {
           role="menu"
           className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border bg-surface p-1 shadow-lg shadow-brand-600/10"
         >
-          <div className="border-b px-3 py-2.5 sm:hidden">
+          <div className="border-b px-3 py-2.5">
             <p className="truncate text-sm font-semibold">{user.name}</p>
             <p className="truncate text-xs text-muted">{user.email}</p>
+            <p className="mt-1.5 truncate text-xs text-muted">
+              {USER_TYPE_LABELS[user.userType]}
+              {user.organisation && ` · ${user.organisation.name}`}
+            </p>
           </div>
           <button
             type="button"
