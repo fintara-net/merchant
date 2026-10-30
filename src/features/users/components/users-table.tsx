@@ -1,4 +1,13 @@
-import { Ban, CircleCheck, KeyRound, Lock, LockOpen, SquarePen, Users } from 'lucide-react'
+import {
+  Ban,
+  CircleCheck,
+  KeyRound,
+  Lock,
+  LockOpen,
+  SmartphoneNfc,
+  SquarePen,
+  Users,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableEmpty, TBody, Td, Th, THead } from '@/components/ui/table'
@@ -7,7 +16,7 @@ import { useOrganisationName } from '../organisation'
 import { fullName, USER_TYPE_LABELS, type ManagedUser } from '../schemas'
 import { UserStatusBadge } from './user-status-badge'
 
-/** Tighter cell padding so all 10 columns fit on a laptop screen */
+/** Tighter cell padding so all 10 columns and 5 action buttons fit on a laptop screen */
 const DENSE = 'text-[13px] [&_td]:px-2 [&_th]:px-2'
 
 export interface UserActions {
@@ -15,6 +24,7 @@ export interface UserActions {
   onToggleLock: (user: ManagedUser) => void
   onToggleStatus: (user: ManagedUser) => void
   onResetPassword: (user: ManagedUser) => void
+  onResetDevice: (user: ManagedUser) => void
 }
 
 interface UsersTableProps {
@@ -70,7 +80,7 @@ export function UsersTable({
         <Th className="w-10">S.N</Th>
         <Th>Username</Th>
         <Th>Fullname</Th>
-        <Th>Phone Number</Th>
+        <Th>Phone</Th>
         <Th>Email ID</Th>
         <Th>User Type</Th>
         <Th>Organisation</Th>
@@ -113,11 +123,11 @@ export function UsersTable({
             </Td>
             <Td className="tabular-nums">{startIndex + i + 1}</Td>
             <Td>{u.username}</Td>
-            <Td className="max-w-40 truncate" title={fullName(u)}>
+            <Td className="max-w-36 truncate" title={fullName(u)}>
               {fullName(u)}
             </Td>
             <Td className="tabular-nums">{u.phoneNumber}</Td>
-            <Td className="max-w-36 truncate" title={u.email}>
+            <Td className="max-w-32 truncate" title={u.email}>
               {u.email}
             </Td>
             <Td>{USER_TYPE_LABELS[u.userType]}</Td>
@@ -151,6 +161,12 @@ export function UsersTable({
                     onClick={() => actions.onResetPassword(u)}
                   >
                     <KeyRound />
+                  </IconAction>
+                  <IconAction
+                    label={`Reset device for ${u.username}`}
+                    onClick={() => actions.onResetDevice(u)}
+                  >
+                    <SmartphoneNfc />
                   </IconAction>
                 </div>
               </Td>

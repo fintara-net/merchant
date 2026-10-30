@@ -5,6 +5,7 @@ import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog } from '@/components/ui/dialog'
+import { Notice, useNotice } from '@/components/ui/notice'
 import { Label } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
 import { Select } from '@/components/ui/select'
@@ -28,7 +29,8 @@ export const Route = createFileRoute('/_app/users/')({
   component: UsersPage,
 })
 
-type ConfirmAction = 'lock' | 'unlock' | 'deactivate' | 'activate' | 'reset-password'
+type ConfirmAction =
+  'lock' | 'unlock' | 'deactivate' | 'activate' | 'reset-password' | 'reset-device'
 
 type DialogState =
   | { mode: 'add' }
@@ -70,6 +72,19 @@ const CONFIRM_TEXT: Record<
     label: 'Reset password',
     tone: 'danger',
   },
+  'reset-device': {
+    title: 'Reset device?',
+    description: (u) =>
+      `${u} will be signed out and must register their device again the next time they sign in.`,
+    label: 'Reset device',
+    tone: 'danger',
+  },
+}
+
+/** Shown briefly after actions that have no visible effect in the table */
+const DONE_TEXT: Partial<Record<ConfirmAction, (u: string) => string>> = {
+  'reset-password': (u) => `Password reset for ${u}.`,
+  'reset-device': (u) => `Device reset for ${u}.`,
 }
 
 const DEFAULT_PAGE_SIZE = 10
@@ -84,6 +99,7 @@ function UsersPage() {
   const [dialog, setDialog] = useState<DialogState>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const close = () => setDialog(null)
+  const [notice, showNotice] = useNotice()
 
   const merchantFilter = search.merchant
     ? merchants.find((m) => m.id === search.merchant)
@@ -130,7 +146,9 @@ function UsersPage() {
     if (action === 'lock' || action === 'unlock') setLocked(user.id, action === 'lock')
     if (action === 'deactivate' || action === 'activate')
       setStatus(user.id, action === 'activate' ? 'active' : 'inactive')
-    // TODO: call the reset-password endpoint once the API exists
+    // TODO: call the reset-password / reset-device endpoints once the API exists
+    const done = DONE_TEXT[action]
+    if (done) showNotice(done(user.username))
     close()
   }
 
@@ -156,6 +174,8 @@ function UsersPage() {
       }
       actions={newUserButton}
     >
+      <Notice message={notice} />
+
       {users.length > 0 && (
         <div className="mb-4 flex items-center gap-2">
           <Label htmlFor="user-type-filter" className="text-sm text-muted">
@@ -217,6 +237,7 @@ function UsersPage() {
                 onToggleStatus: (user) =>
                   ask(user.status === 'active' ? 'deactivate' : 'activate', user),
                 onResetPassword: (user) => ask('reset-password', user),
+                onResetDevice: (user) => ask('reset-device', user),
               }
             : undefined
         }
