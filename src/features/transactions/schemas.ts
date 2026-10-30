@@ -48,7 +48,10 @@ export const transactionSearchSchema = z.object({
   range: z.enum(DATE_RANGES).optional().catch(undefined),
   status: z.enum(TRANSACTION_STATUSES).optional().catch(undefined),
   mode: z.enum(PAYMENT_MODES).optional().catch(undefined),
+  /** Issuing bank id */
   bank: z.string().optional().catch(undefined),
+  /** Merchant id */
+  merchant: z.string().optional().catch(undefined),
   searchBy: z.enum(SEARCH_FIELDS).optional().catch(undefined),
   q: z.string().optional().catch(undefined),
   page: z.number().int().positive().optional().catch(undefined),

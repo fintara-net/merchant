@@ -26,6 +26,8 @@ interface TransactionsTableProps {
   startIndex?: number
   onView?: (transaction: Transaction) => void
   onReceipt?: (transaction: Transaction) => void
+  /** Hide the Bank Name column, e.g. for bank users who only see their own bank */
+  hideBankColumn?: boolean
 }
 
 export function TransactionsTable({
@@ -33,11 +35,13 @@ export function TransactionsTable({
   startIndex = 0,
   onView,
   onReceipt,
+  hideBankColumn = false,
 }: TransactionsTableProps) {
+  const columns = hideBankColumn ? COLUMNS.filter((c) => c !== 'Bank Name') : COLUMNS
   const header = (
     <THead>
       <tr>
-        {COLUMNS.map((c) => (
+        {columns.map((c) => (
           <Th
             key={c}
             className={
@@ -78,7 +82,7 @@ export function TransactionsTable({
             <Td>{t.storeAddress}</Td>
             <Td className="tabular-nums">{t.terminalId}</Td>
             <Td className="tabular-nums">{t.rrn}</Td>
-            <Td>{t.bankName}</Td>
+            {!hideBankColumn && <Td>{t.bankName}</Td>}
             <Td className="tabular-nums">{maskCardNumber(t.cardNumber)}</Td>
             <Td>{t.approvalCode}</Td>
             <Td className="tabular-nums">{formatTransactionDate(t.createdAt)}</Td>
