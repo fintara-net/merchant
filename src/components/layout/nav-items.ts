@@ -1,5 +1,12 @@
 import type { LinkProps } from '@tanstack/react-router'
-import { ArrowLeftRight, Building2, LayoutDashboard, Users, type LucideIcon } from 'lucide-react'
+import {
+  ArrowLeftRight,
+  Building2,
+  LayoutDashboard,
+  Store,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { PERMISSIONS, type Permission } from '@/features/permissions'
 
 export interface NavItem {
@@ -23,5 +30,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Building2,
     permission: PERMISSIONS.ISSUING_BANKS_READ,
   },
+  { to: '/merchants', label: 'Merchants', icon: Store, permission: PERMISSIONS.MERCHANTS_READ },
   { to: '/users', label: 'User management', icon: Users, permission: PERMISSIONS.USERS_READ },
 ]

@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppForbiddenRouteImport } from './routes/_app/forbidden'
 import { Route as AppIssuingBanksIndexRouteImport } from './routes/_app/issuing-banks/index'
+import { Route as AppMerchantsIndexRouteImport } from './routes/_app/merchants/index'
 import { Route as AppTransactionsIndexRouteImport } from './routes/_app/transactions/index'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users/index'
 
@@ -41,6 +42,11 @@ const AppIssuingBanksIndexRoute = AppIssuingBanksIndexRouteImport.update({
   path: '/issuing-banks/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMerchantsIndexRoute = AppMerchantsIndexRouteImport.update({
+  id: '/merchants/',
+  path: '/merchants/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTransactionsIndexRoute = AppTransactionsIndexRouteImport.update({
   id: '/transactions/',
   path: '/transactions/',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/forbidden': typeof AppForbiddenRoute
   '/issuing-banks/': typeof AppIssuingBanksIndexRoute
+  '/merchants/': typeof AppMerchantsIndexRoute
   '/transactions/': typeof AppTransactionsIndexRoute
   '/users/': typeof AppUsersIndexRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/forbidden': typeof AppForbiddenRoute
   '/': typeof AppIndexRoute
   '/issuing-banks': typeof AppIssuingBanksIndexRoute
+  '/merchants': typeof AppMerchantsIndexRoute
   '/transactions': typeof AppTransactionsIndexRoute
   '/users': typeof AppUsersIndexRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_app/forbidden': typeof AppForbiddenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/issuing-banks/': typeof AppIssuingBanksIndexRoute
+  '/_app/merchants/': typeof AppMerchantsIndexRoute
   '/_app/transactions/': typeof AppTransactionsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/forbidden'
     | '/issuing-banks/'
+    | '/merchants/'
     | '/transactions/'
     | '/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/'
     | '/issuing-banks'
+    | '/merchants'
     | '/transactions'
     | '/users'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/_app/forbidden'
     | '/_app/'
     | '/_app/issuing-banks/'
+    | '/_app/merchants/'
     | '/_app/transactions/'
     | '/_app/users/'
   fileRoutesById: FileRoutesById
@@ -148,6 +160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIssuingBanksIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/merchants/': {
+      id: '/_app/merchants/'
+      path: '/merchants'
+      fullPath: '/merchants/'
+      preLoaderRoute: typeof AppMerchantsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/transactions/': {
       id: '/_app/transactions/'
       path: '/transactions'
@@ -169,6 +188,7 @@ interface AppRouteChildren {
   AppForbiddenRoute: typeof AppForbiddenRoute
   AppIndexRoute: typeof AppIndexRoute
   AppIssuingBanksIndexRoute: typeof AppIssuingBanksIndexRoute
+  AppMerchantsIndexRoute: typeof AppMerchantsIndexRoute
   AppTransactionsIndexRoute: typeof AppTransactionsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
 }
@@ -177,6 +197,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppForbiddenRoute: AppForbiddenRoute,
   AppIndexRoute: AppIndexRoute,
   AppIssuingBanksIndexRoute: AppIssuingBanksIndexRoute,
+  AppMerchantsIndexRoute: AppMerchantsIndexRoute,
   AppTransactionsIndexRoute: AppTransactionsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
 }

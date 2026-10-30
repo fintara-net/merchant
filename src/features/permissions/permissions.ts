@@ -8,6 +8,8 @@ export const PERMISSIONS = {
   TRANSACTIONS_EXPORT: 'transactions:export',
   ISSUING_BANKS_READ: 'issuing_banks:read',
   ISSUING_BANKS_MANAGE: 'issuing_banks:manage',
+  MERCHANTS_READ: 'merchants:read',
+  MERCHANTS_MANAGE: 'merchants:manage',
   USERS_READ: 'users:read',
   USERS_MANAGE: 'users:manage',
 } as const

@@ -12,7 +12,12 @@ const SESSION_KEY = 'mock-session-email'
 
 const permissionsFor = (email: string) =>
   email.startsWith('viewer')
-    ? [PERMISSIONS.DASHBOARD_VIEW, PERMISSIONS.TRANSACTIONS_READ, PERMISSIONS.ISSUING_BANKS_READ]
+    ? [
+        PERMISSIONS.DASHBOARD_VIEW,
+        PERMISSIONS.TRANSACTIONS_READ,
+        PERMISSIONS.ISSUING_BANKS_READ,
+        PERMISSIONS.MERCHANTS_READ,
+      ]
     : Object.values(PERMISSIONS)
 
 const sessionUser = () => {
