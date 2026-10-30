@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { emailField, personNameField, phoneField, usernameField } from '@/lib/schemas'
 
 /**
  * Who the user works for decides which data they can see:
@@ -13,6 +14,12 @@ export const USER_TYPE_LABELS: Record<UserType, string> = {
   bank: 'Bank',
   merchant: 'Merchant',
 }
+/**
+ * Types that can be created from the Users page. Merchant logins are created
+ * together with their merchant on the Merchants page (one login per merchant
+ * for now). Add 'merchant' back here when merchants can have several staff logins.
+ */
+export const CREATABLE_USER_TYPES: readonly UserType[] = ['super-admin', 'bank']
 
 export const USER_STATUSES = ['active', 'inactive'] as const
 export type UserStatus = (typeof USER_STATUSES)[number]
@@ -39,21 +46,13 @@ export interface ManagedUser {
 
 export const userFormSchema = z
   .object({
-    username: z
-      .string()
-      .trim()
-      .min(3, 'At least 3 characters')
-      .max(50, 'At most 50 characters')
-      .regex(/^[A-Za-z0-9._-]+$/, 'Letters, numbers, dot, dash and underscore only'),
-    firstName: z.string().trim().min(1, 'First name is required').max(50, 'At most 50 characters'),
+    username: usernameField,
+    firstName: personNameField('First name'),
     /** '' when there's no middle name */
     middleName: z.string().trim().max(50, 'At most 50 characters'),
-    lastName: z.string().trim().min(1, 'Last name is required').max(50, 'At most 50 characters'),
-    phoneNumber: z
-      .string()
-      .trim()
-      .regex(/^9\d{9}$/, 'Enter a 10-digit mobile number starting with 9'),
-    email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email')),
+    lastName: personNameField('Last name'),
+    phoneNumber: phoneField,
+    email: emailField,
     userType: z.enum(USER_TYPES),
     /** '' when no bank is selected */
     bankId: z.string(),
@@ -81,6 +80,8 @@ export type UserFormValues = z.output<typeof userFormSchema>
 
 export const usersSearchSchema = z.object({
   type: z.enum(USER_TYPES).optional().catch(undefined),
+  /** Show only the logins of one merchant (from the Merchants page "Manage login" link) */
+  merchant: z.string().optional().catch(undefined),
   page: z.number().int().positive().optional().catch(undefined),
   pageSize: z.number().int().positive().max(100).optional().catch(undefined),
 })
