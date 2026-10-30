@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { ReactNode } from 'react'
-import { Controller, useForm, useWatch, type FieldError } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { Field } from '@/components/ui/field'
 import { Input, Label } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
@@ -175,31 +175,5 @@ export function UserForm({
         </Button>
       </div>
     </form>
-  )
-}
-
-function Field({
-  id,
-  label,
-  optional = false,
-  error,
-  children,
-}: {
-  id: string
-  label: string
-  /** Shows a small "Optional" tag on the same line, so labels don't wrap */
-  optional?: boolean
-  error?: FieldError
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <Label htmlFor={id}>{label}</Label>
-        {optional && <span className="text-xs text-muted">Optional</span>}
-      </div>
-      {children}
-      {error && <p className="text-xs text-danger">{error.message}</p>}
-    </div>
   )
 }
