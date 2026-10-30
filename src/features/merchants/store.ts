@@ -38,14 +38,18 @@ const SAMPLE_MERCHANTS: Merchant[] = [
 
 interface MerchantsState {
   merchants: Merchant[]
-  addMerchant: (values: MerchantFormValues) => void
+  /** Returns the new merchant's id */
+  addMerchant: (values: MerchantFormValues) => string
   updateMerchant: (id: string, values: MerchantFormValues) => void
 }
 
 export const useMerchants = create<MerchantsState>()((set) => ({
   merchants: SAMPLE_MERCHANTS,
-  addMerchant: (values) =>
-    set((s) => ({ merchants: [...s.merchants, { id: crypto.randomUUID(), ...values }] })),
+  addMerchant: (values) => {
+    const id = crypto.randomUUID()
+    set((s) => ({ merchants: [...s.merchants, { id, ...values }] }))
+    return id
+  },
   updateMerchant: (id, values) =>
     set((s) => ({ merchants: s.merchants.map((m) => (m.id === id ? { ...m, ...values } : m)) })),
 }))

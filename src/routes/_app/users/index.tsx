@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
 import { Select } from '@/components/ui/select'
+import { useMerchants } from '@/features/merchants'
 import { PERMISSIONS, requirePermission, usePermissions } from '@/features/permissions'
 import {
   UserForm,
@@ -75,6 +76,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 function UsersPage() {
   const { users, addUser, updateUser, setLocked, setStatus } = useUsers()
+  const merchants = useMerchants((s) => s.merchants)
   const { can } = usePermissions()
   const canManage = can(PERMISSIONS.USERS_MANAGE)
   const search = Route.useSearch()
@@ -83,7 +85,14 @@ function UsersPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const close = () => setDialog(null)
 
-  const filtered = search.type ? users.filter((u) => u.userType === search.type) : users
+  const merchantFilter = search.merchant
+    ? merchants.find((m) => m.id === search.merchant)
+    : undefined
+  const filtered = users.filter(
+    (u) =>
+      (!search.type || u.userType === search.type) &&
+      (!search.merchant || u.merchantId === search.merchant),
+  )
   const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
   const page = Math.min(search.page ?? 1, pageCount)
@@ -173,6 +182,24 @@ function UsersPage() {
               </option>
             ))}
           </Select>
+          {search.merchant && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-primary/10 py-1 pr-1 pl-2.5 text-sm text-primary">
+              Logins for {merchantFilter?.name ?? 'unknown merchant'}
+              <button
+                type="button"
+                aria-label="Show all users"
+                title="Show all users"
+                onClick={() =>
+                  void navigate({
+                    search: (prev) => ({ ...prev, merchant: undefined, page: undefined }),
+                  })
+                }
+                className="grid size-6 place-items-center rounded hover:bg-primary/15"
+              >
+                <X className="size-3.5" />
+              </button>
+            </span>
+          )}
         </div>
       )}
 

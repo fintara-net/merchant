@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { merchantFormSchema } from './schemas'
+import { merchantCreateFormSchema, merchantFormSchema } from './schemas'
 
 const valid = {
   name: 'Himalayan Electronics',
@@ -29,5 +29,25 @@ describe('merchantFormSchema', () => {
 
   it('rejects merchant codes with symbols', () => {
     expect(merchantFormSchema.safeParse({ ...valid, merchantCode: 'MER-01' }).success).toBe(false)
+  })
+})
+
+describe('merchantCreateFormSchema', () => {
+  const login = { username: 'himalayan.electronics', firstName: 'Ramesh', lastName: 'Shrestha' }
+
+  it('requires a login when adding a merchant', () => {
+    expect(merchantCreateFormSchema.safeParse(valid).success).toBe(false)
+    expect(merchantCreateFormSchema.safeParse({ ...valid, login }).success).toBe(true)
+  })
+
+  it('checks the login username and contact name', () => {
+    const result = merchantCreateFormSchema.safeParse({
+      ...valid,
+      login: { username: 'a b', firstName: '', lastName: 'Shrestha' },
+    })
+    expect(result.error?.issues.map((i) => i.path.join('.'))).toEqual([
+      'login.username',
+      'login.firstName',
+    ])
   })
 })

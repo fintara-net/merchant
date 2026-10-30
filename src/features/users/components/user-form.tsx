@@ -10,8 +10,8 @@ import { useIssuingBanks } from '@/features/issuing-banks'
 import { useMerchants } from '@/features/merchants'
 import { useOrganisationName } from '../organisation'
 import {
+  CREATABLE_USER_TYPES,
   USER_TYPE_LABELS,
-  USER_TYPES,
   userFormSchema,
   type UserFormInput,
   type UserFormValues,
@@ -163,7 +163,7 @@ export function UserForm({
           <>
             <Field id="user-type" label="User type" error={errors.userType}>
               <Select id="user-type" {...form.register('userType')}>
-                {USER_TYPES.map((t) => (
+                {CREATABLE_USER_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {USER_TYPE_LABELS[t]}
                   </option>
@@ -184,6 +184,8 @@ export function UserForm({
               </Field>
             )}
 
+            {/* Not reachable yet: merchant logins are created on the Merchants page.
+                Kept for when merchants can have several staff logins. */}
             {userType === 'merchant' && (
               <Field id="user-merchant" label="Merchant" error={errors.merchantId}>
                 <Select

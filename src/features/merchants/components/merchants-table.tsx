@@ -1,8 +1,15 @@
-import { SquarePen, Store } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { SquarePen, Store, UserCog } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import { IssuingBankStatusBadge as StatusBadge } from '@/features/issuing-banks/components/status-badge'
 import type { Merchant } from '../schemas'
+
+/** Tighter cell padding so all 9 columns fit on a laptop screen (same as the users table) */
+const DENSE = 'text-[13px] [&_td]:px-2 [&_th]:px-2'
+
+const ICON_BUTTON =
+  'grid size-8 place-items-center rounded-md bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-primary'
 
 interface MerchantsTableProps {
   merchants: Merchant[]
@@ -10,9 +17,19 @@ interface MerchantsTableProps {
   onEdit?: (merchant: Merchant) => void
   /** Shown when there are no merchants */
   emptyAction?: ReactNode
+  /** Username of each merchant's login, keyed by merchant id */
+  logins: ReadonlyMap<string, string>
+  /** Show the "Manage login" link (needs access to the Users page) */
+  canManageLogins?: boolean
 }
 
-export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTableProps) {
+export function MerchantsTable({
+  merchants,
+  onEdit,
+  emptyAction,
+  logins,
+  canManageLogins = false,
+}: MerchantsTableProps) {
   if (merchants.length === 0) {
     return (
       <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-16 text-center">
@@ -26,6 +43,26 @@ export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTabl
     )
   }
 
+  const hasActions = !!onEdit || canManageLogins
+
+  const actionButtons = (merchant: Merchant) =>
+    hasActions && (
+      <div className="flex gap-1">
+        {editButton(merchant)}
+        {canManageLogins && (
+          <Link
+            to="/users"
+            search={{ merchant: merchant.id }}
+            aria-label={`Manage login for ${merchant.name}`}
+            title="Manage login"
+            className={ICON_BUTTON}
+          >
+            <UserCog className="size-4" />
+          </Link>
+        )}
+      </div>
+    )
+
   const editButton = (merchant: Merchant) =>
     onEdit && (
       <button
@@ -33,7 +70,7 @@ export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTabl
         onClick={() => onEdit(merchant)}
         aria-label={`Edit ${merchant.name}`}
         title="Edit"
-        className="grid size-8 place-items-center rounded-md bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-primary"
+        className={ICON_BUTTON}
       >
         <SquarePen className="size-4" />
       </button>
@@ -43,7 +80,7 @@ export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTabl
     <>
       {/* Tablet & desktop: table */}
       <div className="hidden md:block">
-        <Table>
+        <Table className={DENSE}>
           <THead>
             <tr>
               <Th className="w-16">S.N</Th>
@@ -52,25 +89,31 @@ export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTabl
               <Th>PAN/VAT</Th>
               <Th>Phone</Th>
               <Th>Email</Th>
+              <Th>Login</Th>
               <Th>Status</Th>
-              {onEdit && <Th className="w-24">Action</Th>}
+              {hasActions && <Th className="w-24">Action</Th>}
             </tr>
           </THead>
           <TBody>
             {merchants.map((merchant, i) => (
               <tr key={merchant.id}>
                 <Td className="tabular-nums">{i + 1}</Td>
-                <Td>{merchant.name}</Td>
+                <Td className="max-w-48 truncate" title={merchant.name}>
+                  {merchant.name}
+                </Td>
                 <Td>{merchant.merchantCode}</Td>
                 <Td className="tabular-nums">{merchant.panNumber}</Td>
                 <Td className="tabular-nums">{merchant.phoneNumber}</Td>
-                <Td className="max-w-44 truncate" title={merchant.email}>
+                <Td className="max-w-40 truncate" title={merchant.email}>
                   {merchant.email}
+                </Td>
+                <Td className="max-w-36 truncate" title={logins.get(merchant.id)}>
+                  {logins.get(merchant.id) ?? '—'}
                 </Td>
                 <Td>
                   <StatusBadge status={merchant.status} />
                 </Td>
-                {onEdit && <Td className="py-2.5">{editButton(merchant)}</Td>}
+                {hasActions && <Td className="py-2.5">{actionButtons(merchant)}</Td>}
               </tr>
             ))}
           </TBody>
@@ -90,9 +133,11 @@ export function MerchantsTable({ merchants, onEdit, emptyAction }: MerchantsTabl
                 <span className="text-xs text-muted">{merchant.merchantCode}</span>
                 <StatusBadge status={merchant.status} />
               </div>
-              <p className="mt-1 truncate text-xs text-muted">{merchant.email}</p>
+              <p className="mt-1 truncate text-xs text-muted">
+                {logins.get(merchant.id) ?? 'No login'} · {merchant.email}
+              </p>
             </div>
-            {editButton(merchant)}
+            {actionButtons(merchant)}
           </li>
         ))}
       </ul>

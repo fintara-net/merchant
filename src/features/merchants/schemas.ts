@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { emailField, personNameField, phoneField, usernameField } from '@/lib/schemas'
 
 export const MERCHANT_STATUSES = ['active', 'inactive'] as const
 export type MerchantStatus = (typeof MERCHANT_STATUSES)[number]
@@ -27,12 +28,25 @@ export const merchantFormSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{9}$/, 'PAN number must be 9 digits'),
-  phoneNumber: z
-    .string()
-    .trim()
-    .regex(/^9\d{9}$/, 'Enter a 10-digit mobile number starting with 9'),
-  email: z.string().trim().toLowerCase().email('Enter a valid email address'),
+  phoneNumber: phoneField,
+  email: emailField,
   status: z.enum(MERCHANT_STATUSES),
 })
 export type MerchantFormInput = z.input<typeof merchantFormSchema>
 export type MerchantFormValues = z.output<typeof merchantFormSchema>
+
+/**
+ * The merchant's login, created together with the merchant. It uses the
+ * merchant's email and phone. After creation it's managed on the Users page.
+ */
+export const merchantLoginSchema = z.object({
+  username: usernameField,
+  firstName: personNameField('First name'),
+  lastName: personNameField('Last name'),
+})
+export type MerchantLoginValues = z.output<typeof merchantLoginSchema>
+
+/** Adding a merchant = business details + its first login */
+export const merchantCreateFormSchema = merchantFormSchema.extend({ login: merchantLoginSchema })
+export type MerchantCreateFormInput = z.input<typeof merchantCreateFormSchema>
+export type MerchantCreateFormValues = z.output<typeof merchantCreateFormSchema>
