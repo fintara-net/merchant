@@ -1,6 +1,7 @@
 # Fintara Dashboard — Frontend
 
-Internal SPA dashboard: transactions, issuing banks, user management — with permission-based access.
+Internal SPA dashboard: transactions, issuing banks, merchants and user management, with
+permission-based access for three kinds of users (Super Admin, Bank, Merchant).
 
 All commands below run **inside this `Frontend/` folder**.
 
@@ -14,7 +15,18 @@ npm run dev                  # http://localhost:5173
 ```
 
 With `VITE_ENABLE_MOCKS=true`, a fake API runs in the browser (MSW). Sign in with **any email + password `password`**.
-Use `viewer@fintara.test` to see a read-only permission set (no User management page, no Add/Edit on Issuing banks).
+The start of the email picks the account type:
+
+| Email starts with | Signs in as                            | Sees                                       |
+| ----------------- | -------------------------------------- | ------------------------------------------ |
+| `bank`            | Bank user of Nabil Bank Limited        | Transactions only, scoped to that bank     |
+| `merchant`        | Merchant user of Himalayan Electronics | Transactions only, scoped to that merchant |
+| `viewer`          | Read-only super admin                  | Every page, no add/edit/manage buttons     |
+| anything else     | Super admin                            | Everything                                 |
+
+Issuing banks, merchants and users are **sample data kept in the browser** (Zustand stores in
+`features/*/store.ts`). Changes reset on page reload until the backend APIs are connected.
+The transactions list is empty until the transactions API exists.
 
 ## Scripts
 
@@ -44,14 +56,22 @@ src/
     _app.tsx         Auth guard + app shell for everything under _app/
     _app/…           Feature pages (each declares its required permission)
   features/<name>/   API calls, Zod schemas, query options, feature components
+  features/auth/     Login, session (/auth/me) incl. user type + organisation
   features/issuing-banks/
                      Table, add/edit form, temporary in-memory data (store.ts)
+  features/merchants/
+                     Table, add/edit form (creates the merchant's login too), sample data
+  features/users/    User list, form, account actions, user types, sample merchant logins
+  features/transactions/
+                     Filters, table, formatting, scope.ts (what each user type may see)
   features/permissions/
                      PERMISSIONS keys, usePermissions(), <Can>, requirePermission()
-  components/ui/     Reusable primitives (Button, Dialog, Switch, Table…)
+  components/ui/     Reusable primitives (Button, Dialog, ConfirmDialog, Select, Checkbox,
+                     Field, Notice, Pagination, Switch, Table…)
   components/layout/ App shell, sidebar, user menu, Page card
   stores/            Client-only UI state (Zustand), e.g. sidebar collapsed
-  lib/               api-client (fetch + Zod validation), query client, env, utils
+  lib/               api-client (fetch + Zod validation), query client, env, utils,
+                     shared form fields (username, name, phone, email) in schemas.ts
   mocks/             MSW handlers for local development
 ```
 

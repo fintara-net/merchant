@@ -13,7 +13,7 @@ export const Route = createFileRoute('/_app/forbidden')({
         Ask an administrator if you think this is a mistake.
       </p>
       <Link to="/" className={buttonVariants({ className: 'mt-6' })}>
-        Back to overview
+        Go to home page
       </Link>
     </div>
   ),
