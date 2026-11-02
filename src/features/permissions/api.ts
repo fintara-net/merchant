@@ -1,13 +1,13 @@
-import { queryOptions } from '@tanstack/react-query'
-import { z } from 'zod'
-import { api } from '@/lib/api-client'
-import { authKeys } from '@/features/auth/api'
+import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import { sessionQueryOptions } from '@/features/auth/api'
 
-const permissionsResponseSchema = z.object({ permissions: z.array(z.string()) })
-
+/** Permissions come with the signed-in user from GET /me, so this reads the same cached query. */
 export const permissionsQueryOptions = queryOptions({
-  queryKey: [...authKeys.all, 'permissions'] as const,
-  queryFn: async ({ signal }) =>
-    (await api.get('/me/permissions', permissionsResponseSchema, { signal })).permissions,
-  staleTime: 5 * 60_000,
+  ...sessionQueryOptions,
+  select: (user) => user.permissions,
 })
+
+/** For route guards: `ensureQueryData` ignores `select`, so pick the permissions here. */
+export async function loadPermissions(queryClient: QueryClient) {
+  return (await queryClient.ensureQueryData(sessionQueryOptions)).permissions
+}

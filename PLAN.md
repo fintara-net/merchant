@@ -21,7 +21,6 @@
 | Client state  | Zustand                        | Sidebar state; temporary sample data until the APIs exist                         |
 | Validation    | Zod 4                          | Validates env, forms, URL search params **and every API response**                |
 | Forms         | React Hook Form + Zod resolver | Fast, typed forms                                                                 |
-| Mock API      | MSW 3                          | Build the UI before the backend exists                                            |
 | Tests         | Vitest + Testing Library       | Shares Vite config                                                                |
 | UI primitives | Hand-written with `cva`        | Same style as shadcn/ui; can add shadcn components later                          |
 
@@ -64,15 +63,14 @@ re-enable it, without changing the data model.
 
 **Expected API contract (to confirm with backend):**
 
-The backend in `../Backend` currently signs in with `{ username, password }`, returns a bearer
-token plus a refresh cookie, and sends permissions as resource bitmasks (`{ "branch": 7 }`).
-Connecting it needs either an adapter here or backend changes; see the backend notes.
+Sign-in is connected (see README). Other pages still use sample data until their APIs exist.
 
 ```
-POST /auth/login        { email, password } → User        (sets cookie)
-POST /auth/logout       → 204                             (clears cookie)
-GET  /auth/me           → User | 401   (User includes userType + organisation {id, name} | null)
-GET  /me/permissions    → { permissions: string[] }
+POST /auth/login        { login, password } → { accessToken, expiresAt }   (sets refresh cookie)
+POST /auth/refresh      → { accessToken, expiresAt }                        (rotates the cookie)
+POST /auth/logout       → 204                                               (clears the cookie)
+GET  /me                → User | 401 | 403 (id, name, email, username, role, userType,
+                          organisation {id, name} | null, permissions: string[])
 GET  /transactions      ?page&pageSize&range&status&mode&bank&merchant&searchBy&q
                         → { items, page, pageSize, total }   (scoped server-side by user)
 GET  /issuing-banks     → IssuingBank[]        POST/PUT for super admins
@@ -90,7 +88,7 @@ Money is sent in **minor units** (integer cents) plus an ISO currency code — n
 - Project setup, lint/format/test, Tailwind v4 theme with light/dark tokens
 - API client with Zod validation, Query + Router integration
 - Auth guard, permission system, sidebar, login page, 404/403 pages
-- Placeholder pages for Overview, Transactions, Issuing banks, Users; MSW mock API
+- Placeholder pages for Overview, Transactions, Issuing banks, Users
 
 ### Phase 1 — UI pages ✅ (done, on sample data)
 

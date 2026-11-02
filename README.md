@@ -14,15 +14,21 @@ cp .env.example .env.local   # already done in the scaffold
 npm run dev                  # http://localhost:5173
 ```
 
-With `VITE_ENABLE_MOCKS=true`, a fake API runs in the browser (MSW). Sign in with **any email + password `password`**.
-The start of the email picks the account type:
+The app talks to the real backend (`../Backend`). Start it first; the dev server forwards
+`/api` to `API_PROXY_TARGET` (default `http://localhost:5076`), so the browser sees one
+origin and the sign-in cookie just works.
 
-| Email starts with | Signs in as                            | Sees                                       |
-| ----------------- | -------------------------------------- | ------------------------------------------ |
-| `bank`            | Bank user of Nabil Bank Limited        | Transactions only, scoped to that bank     |
-| `merchant`        | Merchant user of Himalayan Electronics | Transactions only, scoped to that merchant |
-| `viewer`          | Read-only super admin                  | Every page, no add/edit/manage buttons     |
-| anything else     | Super admin                            | Everything                                 |
+Sign in with the super admin's **email or username** and password. They come from
+`SuperAdmin:Username / Email / Password` in the backend's git-ignored
+`appsettings.Development.json` and are used only when the database has no users yet.
+
+How sign-in works:
+
+- The access token (15 min) is kept only in memory, never in local or session storage.
+- The refresh token is in an httpOnly cookie that scripts can't read, sent only to `/api/v1/auth`.
+- After a reload, or when the access token expires, the app quietly gets a new one; if that
+  fails it goes back to the sign-in page.
+- 5 wrong passwords lock the account for 15 minutes; 10 attempts a minute per address get "too many attempts".
 
 Issuing banks, merchants and users are **sample data kept in the browser** (Zustand stores in
 `features/*/store.ts`). Changes reset on page reload until the backend APIs are connected.
@@ -44,7 +50,7 @@ The transactions list is empty until the transactions API exists.
 ## Stack
 
 React 19 · TypeScript 6 · Vite 8 · Tailwind CSS v4 · TanStack Router (file-based, type-safe) ·
-TanStack Query · Zod 4 · React Hook Form · Zustand · MSW · Vitest + Testing Library · ESLint 10 · Prettier
+TanStack Query · Zod 4 · React Hook Form · Zustand · Vitest + Testing Library · ESLint 10 · Prettier
 
 ## Folder layout
 
@@ -72,7 +78,6 @@ src/
   stores/            Client-only UI state (Zustand), e.g. sidebar collapsed
   lib/               api-client (fetch + Zod validation), query client, env, utils,
                      shared form fields (username, name, phone, email) in schemas.ts
-  mocks/             MSW handlers for local development
 ```
 
 ## Adding a page

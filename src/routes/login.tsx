@@ -17,6 +17,7 @@ import {
   sessionQueryOptions,
   type LoginInput,
 } from '@/features/auth/api'
+import { ApiError, NetworkError } from '@/lib/api-client'
 import { safeRedirect } from '@/lib/utils'
 
 export const Route = createFileRoute('/login')({
@@ -76,7 +77,7 @@ function LoginForm() {
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { login: '', password: '' },
   })
 
   const mutation = useMutation({
@@ -102,20 +103,22 @@ function LoginForm() {
         onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="login">Email or username</Label>
           <Input
-            id="email"
-            type="email"
+            id="login"
+            type="text"
             autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder="you@company.com"
             className="h-11"
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            {...form.register('email')}
+            aria-invalid={!!errors.login}
+            aria-describedby={errors.login ? 'login-error' : undefined}
+            {...form.register('login')}
           />
-          {errors.email && (
-            <p id="email-error" className="text-xs text-danger">
-              {errors.email.message}
+          {errors.login && (
+            <p id="login-error" className="text-xs text-danger">
+              {errors.login.message}
             </p>
           )}
         </div>
@@ -151,7 +154,7 @@ function LoginForm() {
 
         {mutation.isError && (
           <p role="alert" className="rounded-lg bg-danger/10 p-3 text-sm text-danger">
-            {mutation.error.message}
+            {loginErrorMessage(mutation.error)}
           </p>
         )}
 
@@ -166,4 +169,21 @@ function LoginForm() {
       </p>
     </div>
   )
+}
+
+/** Turns a failed sign-in into a message that doesn't reveal whether the account exists. */
+function loginErrorMessage(error: Error) {
+  if (error instanceof NetworkError) return error.message
+  if (error instanceof ApiError) {
+    switch (error.status) {
+      case 400:
+      case 401:
+        return 'Invalid email/username or password.'
+      case 403:
+        return "This account can't use the dashboard yet. Contact your administrator."
+      case 429:
+        return 'Too many sign-in attempts. Please wait a minute and try again.'
+    }
+  }
+  return 'Something went wrong. Please try again.'
 }
