@@ -30,9 +30,19 @@ How sign-in works:
   fails it goes back to the sign-in page.
 - 5 wrong passwords lock the account for 15 minutes; 10 attempts a minute per address get "too many attempts".
 
-Issuing banks, merchants and users are **sample data kept in the browser** (Zustand stores in
-`features/*/store.ts`). Changes reset on page reload until the backend APIs are connected.
-The transactions list is empty until the transactions API exists.
+Every page reads and writes through the backend:
+
+- **Issuing banks** and **merchants**: list, add, edit. Adding a merchant also creates its
+  login in the same request.
+- **Users**: the super admin lists, creates (bank users only), edits, locks and deactivates
+  users. Bank and merchant users see a read-only list of their own organisation's users.
+  The main super admin can't be locked or deactivated, and no other super admin can be created.
+- New logins get a **temporary password**, shown once to the admin who created them.
+- Duplicate values (SWIFT code, merchant code, PAN, username, email) are checked by the
+  server and shown under the matching field.
+- **Transactions** come from an external API that isn't connected yet, so the list is empty.
+  Excel export and the Overview figures wait for that data.
+- Reset password and reset device are still placeholders.
 
 ## Scripts
 
@@ -66,7 +76,7 @@ src/
   features/issuing-banks/
                      Table, add/edit form, temporary in-memory data (store.ts)
   features/merchants/
-                     Table, add/edit form (creates the merchant's login too), sample data
+                     Table, add/edit form (creates the merchant's login too)
   features/users/    User list, form, account actions, user types, sample merchant logins
   features/transactions/
                      Filters, table, formatting, scope.ts (what each user type may see)

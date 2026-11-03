@@ -18,7 +18,7 @@
 | Styling       | Tailwind CSS v4                | CSS-first config (`@theme` in `index.css`), no `tailwind.config.js`               |
 | Routing       | TanStack Router                | Type-safe links + search params, `beforeLoad` guards, per-route code splitting    |
 | Server state  | TanStack Query                 | Caching, retries, background refetch, devtools                                    |
-| Client state  | Zustand                        | Sidebar state; temporary sample data until the APIs exist                         |
+| Client state  | Zustand                        | Sidebar state (server data lives in TanStack Query)                               |
 | Validation    | Zod 4                          | Validates env, forms, URL search params **and every API response**                |
 | Forms         | React Hook Form + Zod resolver | Fast, typed forms                                                                 |
 | Tests         | Vitest + Testing Library       | Shares Vite config                                                                |
@@ -63,7 +63,7 @@ re-enable it, without changing the data model.
 
 **Expected API contract (to confirm with backend):**
 
-Sign-in is connected (see README). Other pages still use sample data until their APIs exist.
+All pages are connected (see README). Errors come back as `{ message, errors: { field: message } }`.
 
 ```
 POST /auth/login        { login, password } → { accessToken, expiresAt }   (sets refresh cookie)
@@ -74,9 +74,10 @@ GET  /me                → User | 401 | 403 (id, name, email, username, role, u
 GET  /transactions      ?page&pageSize&range&status&mode&bank&merchant&searchBy&q
                         → { items, page, pageSize, total }   (scoped server-side by user)
 GET  /issuing-banks     → IssuingBank[]        POST/PUT for super admins
-GET  /merchants         → Merchant[]           POST creates the merchant + its login
-GET  /users             ?type&merchant&page&pageSize → { items, page, pageSize, total }
-POST /users/:id/lock | unlock | activate | deactivate | reset-password | reset-device
+GET  /merchants         → Merchant[]           POST creates the merchant + its login (returns a temporary password)
+GET  /users             ?type&merchant&page&pageSize → { items, page, pageSize, total, activeCount }
+POST /users/:id/lock | unlock | activate | deactivate
+GET  /organisations/options → { banks: {id, name}[], merchants: {id, name}[] }
 ```
 
 Money is sent in **minor units** (integer cents) plus an ISO currency code — never floats.
@@ -99,13 +100,16 @@ Money is sent in **minor units** (integer cents) plus an ISO currency code — n
 - Users: list, filters, create/edit, lock, activate/deactivate, reset password, reset device
 - User types Super Admin / Bank / Merchant; filters, columns and sidebar follow the user type
 
-### Phase 2 — Connect the backend
+### Phase 2 — Connect the backend ✅ (done)
 
-- [ ] Auth: username login, bearer token in memory + refresh cookie, map bitmask permissions
-- [ ] Backend: tenant type (Bank/Merchant), one tenant per user, block deactivated users/tenants,
-      scope user update/delete/suspend to the caller's tenant, tighten CORS
-- [ ] APIs for transactions, issuing banks, merchants, users; replace the Zustand sample stores
-- [ ] Reset password + reset device endpoints; audit log
+- [x] Auth: email or username sign-in, access token in memory + httpOnly refresh cookie, quiet refresh
+- [x] Backend: typed tenants (Bank/Merchant), one organisation per user, block inactive users and
+      organisations, super admin only for changes, CORS limited to configured origins, rate limit
+- [x] APIs for issuing banks, merchants (+ login), users, organisation options; audit log
+- [x] Transactions endpoint scoped by the signed-in user; source not connected yet
+- [ ] Connect the external transactions API (implement `ITransactionSource` in the backend)
+- [ ] Excel export and Overview figures (need transaction data)
+- [ ] Reset password + reset device endpoints; force a password change after the temporary one
 
 ### Phase 3 — Foundations
 
@@ -128,7 +132,7 @@ Money is sent in **minor units** (integer cents) plus an ISO currency code — n
 - [ ] Session timeout / idle logout, re-auth for sensitive actions
 - [ ] Audit log page
 - [ ] Error tracking (e.g. Sentry) with PII scrubbing; mask card numbers (show last 4 only)
-- [ ] Content-Security-Policy + security headers on the hosting layer
+- [ ] Content-Security-Policy + security headers on the hosting layer (the API already sends its own)
 - [ ] Component tests for guards; Playwright E2E for login + permission flows
 - [ ] Accessibility pass, i18n if needed
 
