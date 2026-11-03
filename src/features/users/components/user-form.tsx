@@ -2,12 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ShieldAlert } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormError } from '@/components/ui/form-error'
+import { applyFormErrors, type FormErrors } from '@/lib/form-errors'
 import { Field } from '@/components/ui/field'
 import { Input, Label } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { useIssuingBanks } from '@/features/issuing-banks'
-import { useMerchants } from '@/features/merchants'
+import { useQuery } from '@tanstack/react-query'
+import { issuingBanksQueryOptions } from '@/features/issuing-banks'
+import { useOrganisationOptions } from '@/features/organisations'
 import { useOrganisationName } from '../organisation'
 import {
   CREATABLE_USER_TYPES,
@@ -22,8 +25,8 @@ interface UserFormProps {
   /** Username, user type and organisation can't change once created */
   isEdit?: boolean
   submitLabel: string
-  /** Return field errors to block saving, e.g. a duplicate username */
-  onSubmit: (values: UserFormValues) => Partial<Record<'username' | 'email', string>> | void
+  /** Saves; resolves to errors from the server (e.g. duplicates) when it fails */
+  onSubmit: (values: UserFormValues) => Promise<FormErrors | void>
   onCancel: () => void
 }
 
@@ -48,8 +51,10 @@ export function UserForm({
   onCancel,
 }: UserFormProps) {
   // Only active organisations can get new users
-  const activeBanks = useIssuingBanks((s) => s.banks).filter((b) => b.status === 'active')
-  const activeMerchants = useMerchants((s) => s.merchants).filter((m) => m.status === 'active')
+  const { data: banks = [] } = useQuery(issuingBanksQueryOptions)
+  const activeBanks = banks.filter((b) => b.status === 'active')
+  // Merchant logins are created on the Merchants page; this list only labels existing ones
+  const activeMerchants = useOrganisationOptions().merchants
   const organisationName = useOrganisationName()
   const form = useForm<UserFormInput, unknown, UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -65,11 +70,9 @@ export function UserForm({
     <form
       noValidate
       className="flex flex-col gap-5"
-      onSubmit={form.handleSubmit((values) => {
-        const fieldErrors = onSubmit(values)
-        for (const [field, message] of Object.entries(fieldErrors ?? {})) {
-          form.setError(field as 'username' | 'email', { message })
-        }
+      onSubmit={form.handleSubmit(async (values) => {
+        const errors = await onSubmit(values)
+        if (errors) applyFormErrors(form.setError, errors)
       })}
     >
       <div className="grid gap-4 sm:grid-cols-3">
@@ -230,6 +233,8 @@ export function UserForm({
           </div>
         )}
       />
+
+      <FormError message={errors.root?.message} />
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onCancel}>

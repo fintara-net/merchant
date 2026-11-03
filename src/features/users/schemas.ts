@@ -16,33 +16,36 @@ export const USER_TYPE_LABELS: Record<UserType, string> = {
 }
 /**
  * Types that can be created from the Users page. Merchant logins are created
- * together with their merchant on the Merchants page (one login per merchant
- * for now). Add 'merchant' back here when merchants can have several staff logins.
+ * together with their merchant on the Merchants page, and there is only ever one
+ * super admin (the backend refuses to create another).
  */
-export const CREATABLE_USER_TYPES: readonly UserType[] = ['super-admin', 'bank']
+export const CREATABLE_USER_TYPES: readonly UserType[] = ['bank']
 
 export const USER_STATUSES = ['active', 'inactive'] as const
 export type UserStatus = (typeof USER_STATUSES)[number]
 
-export interface ManagedUser {
-  id: string
-  username: string
-  firstName: string
+export const managedUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  firstName: z.string(),
   /** null when the user has no middle name */
-  middleName: string | null
-  lastName: string
-  phoneNumber: string
-  email: string
+  middleName: z.string().nullable(),
+  lastName: z.string(),
+  phoneNumber: z.string(),
+  email: z.string(),
   /** Can't change after the user is created */
-  userType: UserType
+  userType: z.enum(USER_TYPES),
   /** Issuing bank id; set only for bank users */
-  bankId: string | null
+  bankId: z.string().nullable(),
   /** Merchant id; set only for merchant users */
-  merchantId: string | null
-  status: UserStatus
+  merchantId: z.string().nullable(),
+  status: z.enum(USER_STATUSES),
   /** Locked users can't sign in until unlocked (separate from active/inactive) */
-  locked: boolean
-}
+  locked: z.boolean(),
+  /** The main super admin: can't be locked or deactivated */
+  isProtected: z.boolean(),
+})
+export type ManagedUser = z.infer<typeof managedUserSchema>
 
 export const userFormSchema = z
   .object({

@@ -143,19 +143,24 @@ export function UsersTable({
                   <IconAction label={`Edit ${u.username}`} onClick={() => actions.onEdit(u)}>
                     <SquarePen />
                   </IconAction>
-                  <IconAction
-                    label={`${u.locked ? 'Unlock' : 'Lock'} ${u.username}`}
-                    onClick={() => actions.onToggleLock(u)}
-                  >
-                    {u.locked ? <LockOpen /> : <Lock />}
-                  </IconAction>
-                  <IconAction
-                    label={`${u.status === 'active' ? 'Deactivate' : 'Activate'} ${u.username}`}
-                    tone={u.status === 'active' ? 'danger' : 'success'}
-                    onClick={() => actions.onToggleStatus(u)}
-                  >
-                    {u.status === 'active' ? <Ban /> : <CircleCheck />}
-                  </IconAction>
+                  {/* The main super admin can't be locked or deactivated */}
+                  {!u.isProtected && (
+                    <>
+                      <IconAction
+                        label={`${u.locked ? 'Unlock' : 'Lock'} ${u.username}`}
+                        onClick={() => actions.onToggleLock(u)}
+                      >
+                        {u.locked ? <LockOpen /> : <Lock />}
+                      </IconAction>
+                      <IconAction
+                        label={`${u.status === 'active' ? 'Deactivate' : 'Activate'} ${u.username}`}
+                        tone={u.status === 'active' ? 'danger' : 'success'}
+                        onClick={() => actions.onToggleStatus(u)}
+                      >
+                        {u.status === 'active' ? <Ban /> : <CircleCheck />}
+                      </IconAction>
+                    </>
+                  )}
                   <IconAction
                     label={`Reset password for ${u.username}`}
                     onClick={() => actions.onResetPassword(u)}

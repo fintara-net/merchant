@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
@@ -5,23 +6,28 @@ import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog } from '@/components/ui/dialog'
+import { TemporaryPasswordDialog } from '@/components/ui/temporary-password-dialog'
 import { Notice, useNotice } from '@/components/ui/notice'
 import { Label } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
 import { Select } from '@/components/ui/select'
-import { useMerchants } from '@/features/merchants'
+import { useOrganisationOptions } from '@/features/organisations'
 import { PERMISSIONS, requirePermission, usePermissions } from '@/features/permissions'
 import {
   UserForm,
   UsersTable,
   USER_TYPE_LABELS,
   USER_TYPES,
+  usersQueryOptions,
   usersSearchSchema,
-  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useUserCommand,
   type ManagedUser,
   type UserFormValues,
   type UserType,
 } from '@/features/users'
+import { formErrorsFrom } from '@/lib/form-errors'
 
 export const Route = createFileRoute('/_app/users/')({
   validateSearch: usersSearchSchema,
@@ -90,66 +96,78 @@ const DONE_TEXT: Partial<Record<ConfirmAction, (u: string) => string>> = {
 const DEFAULT_PAGE_SIZE = 10
 
 function UsersPage() {
-  const { users, addUser, updateUser, setLocked, setStatus } = useUsers()
-  const merchants = useMerchants((s) => s.merchants)
+  const { merchants } = useOrganisationOptions()
   const { can } = usePermissions()
+  // Bank and merchant users only read their own organisation's users
   const canManage = can(PERMISSIONS.USERS_MANAGE)
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const [dialog, setDialog] = useState<DialogState>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [newLogin, setNewLogin] = useState<{ username: string; password: string } | null>(null)
   const close = () => setDialog(null)
   const [notice, showNotice] = useNotice()
+
+  const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
+  const { data, isPending, isError } = useQuery(
+    usersQueryOptions({
+      type: search.type,
+      merchant: search.merchant,
+      page: search.page ?? 1,
+      pageSize,
+    }),
+  )
+  const users = data?.items ?? []
+  const total = data?.total ?? 0
+  const page = data?.page ?? search.page ?? 1
+  const activeCount = data?.activeCount ?? 0
+  const hasFilters = !!search.type || !!search.merchant
+
+  const createUser = useCreateUser()
+  const updateUser = useUpdateUser()
+  const userCommand = useUserCommand()
 
   const merchantFilter = search.merchant
     ? merchants.find((m) => m.id === search.merchant)
     : undefined
-  const filtered = users.filter(
-    (u) =>
-      (!search.type || u.userType === search.type) &&
-      (!search.merchant || u.merchantId === search.merchant),
-  )
-  const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const page = Math.min(search.page ?? 1, pageCount)
-  const pageUsers = filtered.slice((page - 1) * pageSize, page * pageSize)
-  const activeCount = users.filter((u) => u.status === 'active' && !u.locked).length
 
   const editing = dialog?.mode === 'edit' ? dialog.user : null
 
-  const save = (values: UserFormValues) => {
-    const others = users.filter((u) => u.id !== editing?.id)
-    const errors: Partial<Record<'username' | 'email', string>> = {}
-    if (others.some((u) => u.username.toLowerCase() === values.username.toLowerCase())) {
-      errors.username = 'This username is already taken'
+  // Duplicate usernames and emails are checked by the server and shown per field.
+  // Type and organisation can't change after creation; the server ignores them on edit.
+  const save = async (values: UserFormValues) => {
+    try {
+      if (editing) {
+        await updateUser.mutateAsync({ id: editing.id, values })
+      } else {
+        const created = await createUser.mutateAsync(values)
+        setNewLogin({ username: created.user.username, password: created.temporaryPassword })
+      }
+      close()
+    } catch (error) {
+      return formErrorsFrom(error)
     }
-    if (others.some((u) => u.email === values.email)) {
-      errors.email = 'A user with this email already exists'
-    }
-    if (errors.username || errors.email) return errors
-
-    // Type and organisation are locked after creation, whatever the form sends
-    if (editing)
-      updateUser(editing.id, {
-        ...values,
-        userType: editing.userType,
-        bankId: editing.bankId ?? '',
-        merchantId: editing.merchantId ?? '',
-      })
-    else addUser(values)
-    close()
   }
 
-  const confirm = () => {
+  const confirm = async () => {
     if (dialog?.mode !== 'confirm') return
     const { action, user } = dialog
-    if (action === 'lock' || action === 'unlock') setLocked(user.id, action === 'lock')
-    if (action === 'deactivate' || action === 'activate')
-      setStatus(user.id, action === 'activate' ? 'active' : 'inactive')
-    // TODO: call the reset-password / reset-device endpoints once the API exists
-    const done = DONE_TEXT[action]
-    if (done) showNotice(done(user.username))
     close()
+    try {
+      if (
+        action === 'lock' ||
+        action === 'unlock' ||
+        action === 'activate' ||
+        action === 'deactivate'
+      ) {
+        await userCommand.mutateAsync({ id: user.id, command: action })
+      }
+      // Reset password / reset device stay placeholders until those endpoints exist
+      const done = DONE_TEXT[action]
+      if (done) showNotice(done(user.username))
+    } catch (error) {
+      showNotice(formErrorsFrom(error).root ?? 'That change could not be saved.')
+    }
   }
 
   const ask = (action: ConfirmAction, user: ManagedUser) =>
@@ -167,8 +185,8 @@ function UsersPage() {
     <Page
       title="User List"
       description={
-        users.length > 0
-          ? `${users.length} ${users.length === 1 ? 'user' : 'users'} · ${activeCount} active` +
+        total > 0
+          ? `${total} ${total === 1 ? 'user' : 'users'} · ${activeCount} active` +
             (selected.size > 0 ? ` · ${selected.size} selected` : '')
           : undefined
       }
@@ -176,7 +194,13 @@ function UsersPage() {
     >
       <Notice message={notice} />
 
-      {users.length > 0 && (
+      {isError && (
+        <p role="alert" className="mb-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
+          Couldn't load users. Please try again.
+        </p>
+      )}
+
+      {(total > 0 || hasFilters) && (
         <div className="mb-4 flex items-center gap-2">
           <Label htmlFor="user-type-filter" className="text-sm text-muted">
             User type
@@ -224,7 +248,7 @@ function UsersPage() {
       )}
 
       <UsersTable
-        users={pageUsers}
+        users={isPending ? [] : users}
         startIndex={(page - 1) * pageSize}
         selected={selected}
         onSelectedChange={setSelected}
@@ -247,7 +271,7 @@ function UsersPage() {
         <Pagination
           page={page}
           pageSize={pageSize}
-          total={filtered.length}
+          total={total}
           onPageChange={(p) => void navigate({ search: (prev) => ({ ...prev, page: p }) })}
           onPageSizeChange={(size) =>
             void navigate({ search: (prev) => ({ ...prev, pageSize: size, page: undefined }) })
@@ -284,7 +308,7 @@ function UsersPage() {
       <ConfirmDialog
         open={dialog?.mode === 'confirm'}
         onClose={close}
-        onConfirm={confirm}
+        onConfirm={() => void confirm()}
         title={confirmText?.title ?? ''}
         description={
           dialog?.mode === 'confirm' && confirmText
@@ -294,6 +318,8 @@ function UsersPage() {
         confirmLabel={confirmText?.label ?? ''}
         tone={confirmText?.tone}
       />
+
+      <TemporaryPasswordDialog login={newLogin} onClose={() => setNewLogin(null)} />
     </Page>
   )
 }
