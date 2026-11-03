@@ -1,8 +1,9 @@
 export * from './schemas'
-export { useMerchants } from './store'
-export { MerchantsTable } from './components/merchants-table'
 export {
-  MerchantForm,
-  type MerchantFormErrorField,
-  type MerchantSubmitValues,
-} from './components/merchant-form'
+  merchantsQueryOptions,
+  useCreateMerchant,
+  useUpdateMerchant,
+  type CreatedMerchant,
+} from './api'
+export { MerchantsTable } from './components/merchants-table'
+export { MerchantForm, type MerchantSubmitValues } from './components/merchant-form'

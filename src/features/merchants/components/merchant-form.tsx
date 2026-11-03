@@ -2,6 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { ReactNode } from 'react'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormError } from '@/components/ui/form-error'
+import { applyFormErrors, type FormErrors } from '@/lib/form-errors'
 import { Field } from '@/components/ui/field'
 import { Input, Label } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -12,9 +14,6 @@ import {
   type MerchantCreateFormValues,
   type MerchantFormValues,
 } from '../schemas'
-
-/** Fields the page can reject after its own checks, e.g. duplicates */
-export type MerchantFormErrorField = 'merchantCode' | 'panNumber' | 'email' | 'login.username'
 
 /** On edit there's no login part: the login is managed on the Users page */
 export type MerchantSubmitValues = MerchantFormValues & {
@@ -28,8 +27,8 @@ interface MerchantFormProps {
   /** Username of the merchant's login, shown when editing */
   loginUsername?: string
   submitLabel: string
-  /** Return field errors to block saving, e.g. a duplicate merchant code */
-  onSubmit: (values: MerchantSubmitValues) => Partial<Record<MerchantFormErrorField, string>> | void
+  /** Saves; resolves to errors from the server (e.g. duplicates) when it fails */
+  onSubmit: (values: MerchantSubmitValues) => Promise<FormErrors | void>
   onCancel: () => void
 }
 
@@ -68,11 +67,9 @@ export function MerchantForm({
     <form
       noValidate
       className="flex flex-col gap-6"
-      onSubmit={form.handleSubmit((values) => {
-        const fieldErrors = onSubmit(values)
-        for (const [field, message] of Object.entries(fieldErrors ?? {})) {
-          form.setError(field as MerchantFormErrorField, { message })
-        }
+      onSubmit={form.handleSubmit(async (values) => {
+        const errors = await onSubmit(values)
+        if (errors) applyFormErrors(form.setError, errors)
       })}
     >
       <Section title="Business details">
@@ -219,6 +216,8 @@ export function MerchantForm({
           </div>
         )}
       />
+
+      <FormError message={errors.root?.message} />
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onCancel}>

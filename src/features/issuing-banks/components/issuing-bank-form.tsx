@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormError } from '@/components/ui/form-error'
+import { applyFormErrors, type FormErrors } from '@/lib/form-errors'
 import { Input, Label } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -12,8 +14,8 @@ import {
 interface IssuingBankFormProps {
   defaultValues?: IssuingBankFormInput
   submitLabel: string
-  /** Return an error message for the SWIFT field to block saving (e.g. duplicate) */
-  onSubmit: (values: IssuingBankFormValues) => string | void
+  /** Saves; resolves to errors from the server (e.g. a duplicate SWIFT code) when it fails */
+  onSubmit: (values: IssuingBankFormValues) => Promise<FormErrors | void>
   onCancel: () => void
 }
 
@@ -33,9 +35,9 @@ export function IssuingBankForm({
     <form
       noValidate
       className="flex flex-col gap-5"
-      onSubmit={form.handleSubmit((values) => {
-        const swiftError = onSubmit(values)
-        if (swiftError) form.setError('swiftCode', { message: swiftError })
+      onSubmit={form.handleSubmit(async (values) => {
+        const errors = await onSubmit(values)
+        if (errors) applyFormErrors(form.setError, errors)
       })}
     >
       <div className="flex flex-col gap-1.5">
@@ -96,6 +98,8 @@ export function IssuingBankForm({
           </div>
         )}
       />
+
+      <FormError message={errors.root?.message} />
 
       <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onCancel}>

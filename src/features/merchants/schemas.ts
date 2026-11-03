@@ -14,6 +14,8 @@ export const merchantSchema = z.object({
   phoneNumber: z.string(),
   email: z.string(),
   status: z.enum(MERCHANT_STATUSES),
+  /** The merchant's first login; null if it has none */
+  loginUsername: z.string().nullable(),
 })
 export type Merchant = z.infer<typeof merchantSchema>
 

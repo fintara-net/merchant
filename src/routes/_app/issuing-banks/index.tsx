@@ -1,3 +1,4 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -7,22 +8,26 @@ import { Dialog } from '@/components/ui/dialog'
 import {
   IssuingBankForm,
   IssuingBanksTable,
-  useIssuingBanks,
+  issuingBanksQueryOptions,
+  useSaveIssuingBank,
   type IssuingBank,
   type IssuingBankFormValues,
 } from '@/features/issuing-banks'
 import { PERMISSIONS, requirePermission, usePermissions } from '@/features/permissions'
+import { formErrorsFrom } from '@/lib/form-errors'
 
 export const Route = createFileRoute('/_app/issuing-banks/')({
   beforeLoad: ({ context }) =>
     requirePermission(context.queryClient, PERMISSIONS.ISSUING_BANKS_READ),
+  loader: ({ context }) => context.queryClient.ensureQueryData(issuingBanksQueryOptions),
   component: IssuingBanksPage,
 })
 
 type DialogState = { mode: 'add' } | { mode: 'edit'; bank: IssuingBank } | null
 
 function IssuingBanksPage() {
-  const { banks, addBank, updateBank } = useIssuingBanks()
+  const { data: banks } = useSuspenseQuery(issuingBanksQueryOptions)
+  const saveBank = useSaveIssuingBank()
   const activeCount = banks.filter((bank) => bank.status === 'active').length
   const { can } = usePermissions()
   const canManage = can(PERMISSIONS.ISSUING_BANKS_MANAGE)
@@ -31,12 +36,14 @@ function IssuingBanksPage() {
 
   const editing = dialog?.mode === 'edit' ? dialog.bank : null
 
-  const save = (values: IssuingBankFormValues) => {
-    const duplicate = banks.some((b) => b.swiftCode === values.swiftCode && b.id !== editing?.id)
-    if (duplicate) return 'A bank with this SWIFT code already exists'
-    if (editing) updateBank(editing.id, values)
-    else addBank(values)
-    close()
+  // Duplicate SWIFT codes are checked by the server and shown under the field
+  const save = async (values: IssuingBankFormValues) => {
+    try {
+      await saveBank.mutateAsync({ id: editing?.id, values })
+      close()
+    } catch (error) {
+      return formErrorsFrom(error)
+    }
   }
 
   const addButton = canManage && (
