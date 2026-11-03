@@ -3,6 +3,7 @@ export {
   usersQueryOptions,
   useCreateUser,
   useUpdateUser,
+  useResetPassword,
   useUserCommand,
   type UserCommand,
 } from './api'

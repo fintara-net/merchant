@@ -52,6 +52,15 @@ const createdUserSchema = z.object({
 })
 export type CreatedUser = z.infer<typeof createdUserSchema>
 
+/** New temporary password for an existing user; they are signed out everywhere */
+export function useResetPassword() {
+  const invalidate = useInvalidateUsers()
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/users/${id}/reset-password`, createdUserSchema),
+    onSuccess: invalidate,
+  })
+}
+
 const detailsOf = (values: UserFormValues) => ({
   username: values.username,
   firstName: values.firstName,

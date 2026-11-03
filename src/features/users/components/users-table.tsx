@@ -143,7 +143,7 @@ export function UsersTable({
                   <IconAction label={`Edit ${u.username}`} onClick={() => actions.onEdit(u)}>
                     <SquarePen />
                   </IconAction>
-                  {/* The main super admin can't be locked or deactivated */}
+                  {/* The main super admin can't be locked, deactivated or have their password reset here */}
                   {!u.isProtected && (
                     <>
                       <IconAction
@@ -159,14 +159,14 @@ export function UsersTable({
                       >
                         {u.status === 'active' ? <Ban /> : <CircleCheck />}
                       </IconAction>
+                      <IconAction
+                        label={`Reset password for ${u.username}`}
+                        onClick={() => actions.onResetPassword(u)}
+                      >
+                        <KeyRound />
+                      </IconAction>
                     </>
                   )}
-                  <IconAction
-                    label={`Reset password for ${u.username}`}
-                    onClick={() => actions.onResetPassword(u)}
-                  >
-                    <KeyRound />
-                  </IconAction>
                   <IconAction
                     label={`Reset device for ${u.username}`}
                     onClick={() => actions.onResetDevice(u)}

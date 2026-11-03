@@ -21,6 +21,7 @@ import {
   usersQueryOptions,
   usersSearchSchema,
   useCreateUser,
+  useResetPassword,
   useUpdateUser,
   useUserCommand,
   type ManagedUser,
@@ -74,7 +75,8 @@ const CONFIRM_TEXT: Record<
   },
   'reset-password': {
     title: 'Reset password?',
-    description: (u) => `${u} will need to set a new password the next time they sign in.`,
+    description: (u) =>
+      `${u} will be signed out and their current password will stop working. You'll get a new temporary password to give them.`,
     label: 'Reset password',
     tone: 'danger',
   },
@@ -89,7 +91,6 @@ const CONFIRM_TEXT: Record<
 
 /** Shown briefly after actions that have no visible effect in the table */
 const DONE_TEXT: Partial<Record<ConfirmAction, (u: string) => string>> = {
-  'reset-password': (u) => `Password reset for ${u}.`,
   'reset-device': (u) => `Device reset for ${u}.`,
 }
 
@@ -104,7 +105,12 @@ function UsersPage() {
   const navigate = Route.useNavigate()
   const [dialog, setDialog] = useState<DialogState>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [newLogin, setNewLogin] = useState<{ username: string; password: string } | null>(null)
+  const [newLogin, setNewLogin] = useState<{
+    username: string
+    password: string
+    /** true after a password reset, false for a newly created login */
+    reset: boolean
+  } | null>(null)
   const close = () => setDialog(null)
   const [notice, showNotice] = useNotice()
 
@@ -126,6 +132,7 @@ function UsersPage() {
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
   const userCommand = useUserCommand()
+  const resetPassword = useResetPassword()
 
   const merchantFilter = search.merchant
     ? merchants.find((m) => m.id === search.merchant)
@@ -141,7 +148,11 @@ function UsersPage() {
         await updateUser.mutateAsync({ id: editing.id, values })
       } else {
         const created = await createUser.mutateAsync(values)
-        setNewLogin({ username: created.user.username, password: created.temporaryPassword })
+        setNewLogin({
+          username: created.user.username,
+          password: created.temporaryPassword,
+          reset: false,
+        })
       }
       close()
     } catch (error) {
@@ -161,8 +172,15 @@ function UsersPage() {
         action === 'deactivate'
       ) {
         await userCommand.mutateAsync({ id: user.id, command: action })
+      } else if (action === 'reset-password') {
+        const result = await resetPassword.mutateAsync(user.id)
+        setNewLogin({
+          username: result.user.username,
+          password: result.temporaryPassword,
+          reset: true,
+        })
       }
-      // Reset password / reset device stay placeholders until those endpoints exist
+      // Reset device stays a placeholder until that endpoint exists
       const done = DONE_TEXT[action]
       if (done) showNotice(done(user.username))
     } catch (error) {
@@ -319,7 +337,14 @@ function UsersPage() {
         tone={confirmText?.tone}
       />
 
-      <TemporaryPasswordDialog login={newLogin} onClose={() => setNewLogin(null)} />
+      <TemporaryPasswordDialog
+        login={newLogin}
+        onClose={() => setNewLogin(null)}
+        {...(newLogin?.reset && {
+          title: 'Password reset',
+          description: "Share this temporary password with the user. It won't be shown again.",
+        })}
+      />
     </Page>
   )
 }

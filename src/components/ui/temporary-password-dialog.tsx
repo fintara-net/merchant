@@ -7,13 +7,20 @@ interface TemporaryPasswordDialogProps {
   /** null hides the dialog */
   login: { username: string; password: string } | null
   onClose: () => void
+  title?: string
+  description?: string
 }
 
 /**
  * Shows a new login's first password once. The server keeps only its hash, so it can't be
  * shown again; the admin passes it on to the user.
  */
-export function TemporaryPasswordDialog({ login, onClose }: TemporaryPasswordDialogProps) {
+export function TemporaryPasswordDialog({
+  login,
+  onClose,
+  title = 'Login created',
+  description = "Share this first password with the user. It won't be shown again.",
+}: TemporaryPasswordDialogProps) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -32,12 +39,7 @@ export function TemporaryPasswordDialog({ login, onClose }: TemporaryPasswordDia
   }
 
   return (
-    <Dialog
-      open={login !== null}
-      onClose={close}
-      title="Login created"
-      description="Share this first password with the user. It won't be shown again."
-    >
+    <Dialog open={login !== null} onClose={close} title={title} description={description}>
       {login && (
         <div className="flex flex-col gap-4">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
