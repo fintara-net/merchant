@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { FileSpreadsheet } from 'lucide-react'
 import { useCallback } from 'react'
@@ -15,7 +15,7 @@ import {
   TransactionFilters,
   TransactionsTable,
   transactionScope,
-  type Transaction,
+  transactionsQueryOptions,
   type TransactionSearch,
 } from '@/features/transactions'
 
@@ -26,22 +26,19 @@ export const Route = createFileRoute('/_app/transactions/')({
   component: TransactionsPage,
 })
 
-// No API yet — the list stays empty until the transactions endpoint exists.
-const NO_TRANSACTIONS: Transaction[] = []
-
 function TransactionsPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const { data: user } = useSuspenseQuery(sessionQueryOptions)
   const scope = transactionScope(user)
-  // TODO: send these to the transactions API. The backend must apply the same
-  // bank/merchant restriction from the signed-in user, not trust these.
+  // The backend applies the same bank/merchant restriction from the signed-in user
   const filters = applyScope(search, scope)
+  const { data, isError } = useQuery(transactionsQueryOptions(filters))
 
   const page = search.page ?? 1
   const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
-  const transactions = NO_TRANSACTIONS
-  const total = transactions.length
+  const transactions = data?.items ?? []
+  const total = data?.total ?? 0
 
   // Any filter change goes back to page 1, unless the change *is* the page
   const update = useCallback(
@@ -68,6 +65,12 @@ function TransactionsPage() {
         showBankFilter={scope.showBankFilter}
         showMerchantFilter={scope.showMerchantFilter}
       />
+
+      {isError && (
+        <p role="alert" className="mt-5 rounded-lg bg-danger/10 p-3 text-sm text-danger">
+          Couldn't load transactions. Please try again.
+        </p>
+      )}
 
       <div className="mt-5">
         <TransactionsTable

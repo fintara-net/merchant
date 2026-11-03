@@ -2,8 +2,7 @@ import { Search, X } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Input, Label } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { useIssuingBanks } from '@/features/issuing-banks'
-import { useMerchants } from '@/features/merchants'
+import { useOrganisationOptions } from '@/features/organisations'
 import { cn } from '@/lib/utils'
 import {
   DATE_RANGE_LABELS,
@@ -59,8 +58,7 @@ export function TransactionFilters({
   showBankFilter = true,
   showMerchantFilter = true,
 }: TransactionFiltersProps) {
-  const banks = useIssuingBanks((s) => s.banks)
-  const merchants = useMerchants((s) => s.merchants)
+  const { banks, merchants } = useOrganisationOptions()
   const searchBy = value.searchBy ?? 'tid'
   const layout = LAYOUT[showBankFilter && showMerchantFilter ? 5 : 4]
 

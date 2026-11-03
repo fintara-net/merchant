@@ -1,5 +1,6 @@
 export * from './schemas'
 export * from './format'
+export { transactionsQueryOptions } from './api'
 export { TransactionFilters } from './components/transaction-filters'
 export { TransactionsTable } from './components/transactions-table'
 export { applyScope, transactionScope, type TransactionScope } from './scope'
