@@ -15,6 +15,8 @@ export const userSchema = z.object({
   /** The bank or merchant the user belongs to; null for super admins */
   organisation: z.object({ id: z.string(), name: z.string() }).nullable(),
   permissions: z.array(z.string()),
+  /** Signed in with a temporary password: must choose their own before using the dashboard */
+  mustChangePassword: z.boolean(),
 })
 export type User = z.infer<typeof userSchema>
 
