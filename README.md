@@ -29,6 +29,25 @@ How sign-in works:
 - After a reload, or when the access token expires, the app quietly gets a new one; if that
   fails it goes back to the sign-in page.
 - 5 wrong passwords lock the account for 15 minutes; 10 attempts a minute per address get "too many attempts".
+- Everyone uses **two-factor authentication** (an authenticator app such as Google or
+  Microsoft Authenticator). The first sign-in leads to `/setup-2fa` (scan a QR code, confirm
+  a code, save 10 recovery codes). After that, each sign-in asks for the password and then
+  the 6-digit code, or a recovery code. Wrong codes count towards the same lockout.
+- A temporary password must be changed first, then 2FA set up; until both are done the API
+  refuses everything else.
+
+The backend needs `TwoFactor:EncryptionKey` (32 random bytes in base64, e.g. from
+`openssl rand -base64 32`) in `appsettings.Development.json` or the `TwoFactor__EncryptionKey`
+environment variable; it won't start without one. Authenticator secrets are encrypted with
+it, so **keep it secret and back it up**: if it's lost, everyone has to set up 2FA again.
+
+If the main super admin loses their phone and their recovery codes, reset their 2FA on the
+server (they set it up again at the next sign-in):
+
+```bash
+cd Backend
+dotnet run --project src/WebApi -- reset-2fa <username>
+```
 
 Every page reads and writes through the backend:
 
@@ -38,11 +57,12 @@ Every page reads and writes through the backend:
   users. Bank and merchant users see a read-only list of their own organisation's users.
   The main super admin can't be locked or deactivated, and no other super admin can be created.
 - New logins get a **temporary password**, shown once to the admin who created them.
+  **Reset password** gives a new temporary password; **Reset 2FA** (for a lost phone) removes
+  the user's authenticator so they set it up again. Both sign the user out everywhere.
 - Duplicate values (SWIFT code, merchant code, PAN, username, email) are checked by the
   server and shown under the matching field.
 - **Transactions** come from an external API that isn't connected yet, so the list is empty.
   Excel export and the Overview figures wait for that data.
-- Reset password and reset device are still placeholders.
 
 ## Scripts
 

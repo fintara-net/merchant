@@ -97,7 +97,7 @@ Money is sent in **minor units** (integer cents) plus an ISO currency code — n
 - Transactions: filters (date, status, mode, bank, merchant, search), table, export button
 - Issuing banks: list + add/edit
 - Merchants: list + add/edit, creates the merchant's login
-- Users: list, filters, create/edit, lock, activate/deactivate, reset password, reset device
+- Users: list, filters, create/edit, lock, activate/deactivate, reset password, reset 2FA
 - User types Super Admin / Bank / Merchant; filters, columns and sidebar follow the user type
 
 ### Phase 2 — Connect the backend ✅ (done)
@@ -109,7 +109,8 @@ Money is sent in **minor units** (integer cents) plus an ISO currency code — n
 - [x] Transactions endpoint scoped by the signed-in user; source not connected yet
 - [ ] Connect the external transactions API (implement `ITransactionSource` in the backend)
 - [ ] Excel export and Overview figures (need transaction data)
-- [ ] Reset password + reset device endpoints; force a password change after the temporary one
+- [x] Reset password; force a password change after the temporary one
+- [x] Two-factor authentication for everyone (authenticator app, recovery codes, admin Reset 2FA)
 
 ### Phase 3 — Foundations
 
