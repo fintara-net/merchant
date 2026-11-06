@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as Setup2faRouteImport } from './routes/setup-2fa'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppForbiddenRouteImport } from './routes/_app/forbidden'
+import { Route as AppTwoFactorRouteImport } from './routes/_app/two-factor'
 import { Route as AppIssuingBanksIndexRouteImport } from './routes/_app/issuing-banks/index'
 import { Route as AppMerchantsIndexRouteImport } from './routes/_app/merchants/index'
 import { Route as AppTransactionsIndexRouteImport } from './routes/_app/transactions/index'
@@ -33,6 +35,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Setup2faRoute = Setup2faRouteImport.update({
+  id: '/setup-2fa',
+  path: '/setup-2fa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -41,6 +48,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppForbiddenRoute = AppForbiddenRouteImport.update({
   id: '/forbidden',
   path: '/forbidden',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTwoFactorRoute = AppTwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
   getParentRoute: () => AppRoute,
 } as any)
 const AppIssuingBanksIndexRoute = AppIssuingBanksIndexRouteImport.update({
@@ -68,7 +80,9 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/setup-2fa': typeof Setup2faRoute
   '/forbidden': typeof AppForbiddenRoute
+  '/two-factor': typeof AppTwoFactorRoute
   '/issuing-banks/': typeof AppIssuingBanksIndexRoute
   '/merchants/': typeof AppMerchantsIndexRoute
   '/transactions/': typeof AppTransactionsIndexRoute
@@ -77,7 +91,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/setup-2fa': typeof Setup2faRoute
   '/forbidden': typeof AppForbiddenRoute
+  '/two-factor': typeof AppTwoFactorRoute
   '/': typeof AppIndexRoute
   '/issuing-banks': typeof AppIssuingBanksIndexRoute
   '/merchants': typeof AppMerchantsIndexRoute
@@ -89,7 +105,9 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/change-password': typeof ChangePasswordRoute
   '/login': typeof LoginRoute
+  '/setup-2fa': typeof Setup2faRoute
   '/_app/forbidden': typeof AppForbiddenRoute
+  '/_app/two-factor': typeof AppTwoFactorRoute
   '/_app/': typeof AppIndexRoute
   '/_app/issuing-banks/': typeof AppIssuingBanksIndexRoute
   '/_app/merchants/': typeof AppMerchantsIndexRoute
@@ -102,7 +120,9 @@ export interface FileRouteTypes {
     | '/'
     | '/change-password'
     | '/login'
+    | '/setup-2fa'
     | '/forbidden'
+    | '/two-factor'
     | '/issuing-banks/'
     | '/merchants/'
     | '/transactions/'
@@ -111,7 +131,9 @@ export interface FileRouteTypes {
   to:
     | '/change-password'
     | '/login'
+    | '/setup-2fa'
     | '/forbidden'
+    | '/two-factor'
     | '/'
     | '/issuing-banks'
     | '/merchants'
@@ -122,7 +144,9 @@ export interface FileRouteTypes {
     | '/_app'
     | '/change-password'
     | '/login'
+    | '/setup-2fa'
     | '/_app/forbidden'
+    | '/_app/two-factor'
     | '/_app/'
     | '/_app/issuing-banks/'
     | '/_app/merchants/'
@@ -134,6 +158,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ChangePasswordRoute: typeof ChangePasswordRoute
   LoginRoute: typeof LoginRoute
+  Setup2faRoute: typeof Setup2faRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -159,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/setup-2fa': {
+      id: '/setup-2fa'
+      path: '/setup-2fa'
+      fullPath: '/setup-2fa'
+      preLoaderRoute: typeof Setup2faRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
@@ -171,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/forbidden'
       fullPath: '/forbidden'
       preLoaderRoute: typeof AppForbiddenRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/two-factor': {
+      id: '/_app/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof AppTwoFactorRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/issuing-banks/': {
@@ -206,6 +245,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppForbiddenRoute: typeof AppForbiddenRoute
+  AppTwoFactorRoute: typeof AppTwoFactorRoute
   AppIndexRoute: typeof AppIndexRoute
   AppIssuingBanksIndexRoute: typeof AppIssuingBanksIndexRoute
   AppMerchantsIndexRoute: typeof AppMerchantsIndexRoute
@@ -215,6 +255,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppForbiddenRoute: AppForbiddenRoute,
+  AppTwoFactorRoute: AppTwoFactorRoute,
   AppIndexRoute: AppIndexRoute,
   AppIssuingBanksIndexRoute: AppIssuingBanksIndexRoute,
   AppMerchantsIndexRoute: AppMerchantsIndexRoute,
@@ -228,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ChangePasswordRoute: ChangePasswordRoute,
   LoginRoute: LoginRoute,
+  Setup2faRoute: Setup2faRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -4,13 +4,14 @@ import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-rout
 import { Check, Circle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { FormError } from '@/components/ui/form-error'
 import { Input } from '@/components/ui/input'
 import { BRAND } from '@/config/brand'
-import { authKeys, logout, sessionQueryOptions } from '@/features/auth/api'
+import { authKeys, sessionQueryOptions } from '@/features/auth/api'
+import { SignOutLink } from '@/features/auth/components/sign-out-link'
 import {
   changePassword,
   changePasswordSchema,
@@ -163,26 +164,5 @@ function ChangePasswordForm() {
         {isSubmitting ? 'Saving…' : 'Save password'}
       </Button>
     </form>
-  )
-}
-
-function SignOutLink() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  return (
-    <button
-      type="button"
-      className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'text-muted')}
-      onClick={() =>
-        void logout()
-          .catch(() => undefined)
-          .finally(() => {
-            queryClient.clear()
-            void router.navigate({ to: '/login' })
-          })
-      }
-    >
-      Sign out
-    </button>
   )
 }

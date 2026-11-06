@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
-import { ChevronDown, KeyRound, LogOut } from 'lucide-react'
+import { ChevronDown, KeyRound, LogOut, ShieldCheck } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { logout, sessionQueryOptions } from '@/features/auth/api'
 import { Button } from '@/components/ui/button'
@@ -88,6 +88,14 @@ export function UserMenu() {
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
           >
             <KeyRound className="size-4" /> Change password
+          </Link>
+          <Link
+            to="/two-factor"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+          >
+            <ShieldCheck className="size-4" /> Two-factor authentication
           </Link>
           <button
             type="button"

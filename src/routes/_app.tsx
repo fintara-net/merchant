@@ -11,6 +11,8 @@ export const Route = createFileRoute('/_app')({
       const user = await queryClient.ensureQueryData(sessionQueryOptions)
       // A temporary password must be replaced first (the API refuses everything else too)
       if (user.mustChangePassword) throw redirect({ to: '/change-password' })
+      // Then everyone must set up an authenticator app
+      if (!user.twoFactorEnabled) throw redirect({ to: '/setup-2fa' })
       return { user }
     } catch (error) {
       if (isUnauthorized(error)) {
