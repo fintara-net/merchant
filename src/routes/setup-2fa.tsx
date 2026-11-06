@@ -253,7 +253,6 @@ function ConfirmForm({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={7}
-          placeholder="123456"
           className="h-12 max-w-48 text-center font-mono text-xl tracking-[0.4em] tabular-nums"
           aria-invalid={!!errors.code}
           {...form.register('code')}

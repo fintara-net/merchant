@@ -339,7 +339,6 @@ function AppCodeForm({ ticket, onRestart }: { ticket: string; onRestart: (r: str
           autoComplete="one-time-code"
           autoFocus
           maxLength={7}
-          placeholder="123456"
           className="h-12 text-center font-mono text-xl tracking-[0.4em] tabular-nums"
           aria-invalid={!!errors.code}
           {...form.register('code')}

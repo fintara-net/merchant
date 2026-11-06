@@ -59,8 +59,9 @@ function TwoFactorPage() {
                 <p className="text-muted">Since {formatDateTime(status.data.enabledAt)}</p>
               )}
               <p className="mt-2 text-muted">
-                Lost your phone? Sign in with a recovery code, or ask your administrator to reset
-                two-factor authentication so you can set it up again.
+                {user.userType === 'super-admin'
+                  ? 'Lost your phone? Sign in with a recovery code. Without one, it can be reset on the server (see the README).'
+                  : 'Lost your phone? Sign in with a recovery code, or ask your administrator to reset two-factor authentication so you can set it up again.'}
               </p>
             </div>
           </div>
@@ -161,7 +162,6 @@ function RegenerateForm({ onDone }: { onDone: (codes: string[]) => void }) {
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={7}
-          placeholder="123456"
           className="font-mono tracking-widest tabular-nums"
           aria-invalid={!!errors.code}
           {...form.register('code')}
