@@ -61,6 +61,15 @@ export function useResetPassword() {
   })
 }
 
+/** Removes the user's authenticator (lost phone); they set it up again at next sign-in */
+export function useResetTwoFactor() {
+  const invalidate = useInvalidateUsers()
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/users/${id}/reset-2fa`, managedUserSchema),
+    onSuccess: invalidate,
+  })
+}
+
 const detailsOf = (values: UserFormValues) => ({
   username: values.username,
   firstName: values.firstName,

@@ -4,7 +4,7 @@ import {
   KeyRound,
   Lock,
   LockOpen,
-  SmartphoneNfc,
+  ShieldOff,
   SquarePen,
   Users,
 } from 'lucide-react'
@@ -24,7 +24,7 @@ export interface UserActions {
   onToggleLock: (user: ManagedUser) => void
   onToggleStatus: (user: ManagedUser) => void
   onResetPassword: (user: ManagedUser) => void
-  onResetDevice: (user: ManagedUser) => void
+  onResetTwoFactor: (user: ManagedUser) => void
 }
 
 interface UsersTableProps {
@@ -143,7 +143,7 @@ export function UsersTable({
                   <IconAction label={`Edit ${u.username}`} onClick={() => actions.onEdit(u)}>
                     <SquarePen />
                   </IconAction>
-                  {/* The main super admin can't be locked, deactivated or have their password reset here */}
+                  {/* The main super admin can't be locked, deactivated or reset here (2FA is reset on the server) */}
                   {!u.isProtected && (
                     <>
                       <IconAction
@@ -165,14 +165,18 @@ export function UsersTable({
                       >
                         <KeyRound />
                       </IconAction>
+                      {/* Nothing to reset until they've set up an authenticator */}
+                      {u.twoFactorEnabled && (
+                        <IconAction
+                          label={`Reset two-factor authentication for ${u.username}`}
+                          tone="danger"
+                          onClick={() => actions.onResetTwoFactor(u)}
+                        >
+                          <ShieldOff />
+                        </IconAction>
+                      )}
                     </>
                   )}
-                  <IconAction
-                    label={`Reset device for ${u.username}`}
-                    onClick={() => actions.onResetDevice(u)}
-                  >
-                    <SmartphoneNfc />
-                  </IconAction>
                 </div>
               </Td>
             )}

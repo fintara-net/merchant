@@ -44,6 +44,8 @@ export const managedUserSchema = z.object({
   locked: z.boolean(),
   /** The main super admin: can't be locked or deactivated */
   isProtected: z.boolean(),
+  /** Has set up an authenticator app */
+  twoFactorEnabled: z.boolean(),
 })
 export type ManagedUser = z.infer<typeof managedUserSchema>
 

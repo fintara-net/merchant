@@ -22,6 +22,7 @@ import {
   usersSearchSchema,
   useCreateUser,
   useResetPassword,
+  useResetTwoFactor,
   useUpdateUser,
   useUserCommand,
   type ManagedUser,
@@ -36,8 +37,7 @@ export const Route = createFileRoute('/_app/users/')({
   component: UsersPage,
 })
 
-type ConfirmAction =
-  'lock' | 'unlock' | 'deactivate' | 'activate' | 'reset-password' | 'reset-device'
+type ConfirmAction = 'lock' | 'unlock' | 'deactivate' | 'activate' | 'reset-password' | 'reset-2fa'
 
 type DialogState =
   | { mode: 'add' }
@@ -80,18 +80,18 @@ const CONFIRM_TEXT: Record<
     label: 'Reset password',
     tone: 'danger',
   },
-  'reset-device': {
-    title: 'Reset device?',
+  'reset-2fa': {
+    title: 'Reset two-factor authentication?',
     description: (u) =>
-      `${u} will be signed out and must register their device again the next time they sign in.`,
-    label: 'Reset device',
+      `Do this if ${u} lost their phone. They'll be signed out, their authenticator app and recovery codes will stop working, and they'll set up a new authenticator the next time they sign in.`,
+    label: 'Reset 2FA',
     tone: 'danger',
   },
 }
 
 /** Shown briefly after actions that have no visible effect in the table */
 const DONE_TEXT: Partial<Record<ConfirmAction, (u: string) => string>> = {
-  'reset-device': (u) => `Device reset for ${u}.`,
+  'reset-2fa': (u) => `Two-factor authentication reset for ${u}.`,
 }
 
 const DEFAULT_PAGE_SIZE = 10
@@ -133,6 +133,7 @@ function UsersPage() {
   const updateUser = useUpdateUser()
   const userCommand = useUserCommand()
   const resetPassword = useResetPassword()
+  const resetTwoFactor = useResetTwoFactor()
 
   const merchantFilter = search.merchant
     ? merchants.find((m) => m.id === search.merchant)
@@ -179,8 +180,9 @@ function UsersPage() {
           password: result.temporaryPassword,
           reset: true,
         })
+      } else {
+        await resetTwoFactor.mutateAsync(user.id)
       }
-      // Reset device stays a placeholder until that endpoint exists
       const done = DONE_TEXT[action]
       if (done) showNotice(done(user.username))
     } catch (error) {
@@ -279,7 +281,7 @@ function UsersPage() {
                 onToggleStatus: (user) =>
                   ask(user.status === 'active' ? 'deactivate' : 'activate', user),
                 onResetPassword: (user) => ask('reset-password', user),
-                onResetDevice: (user) => ask('reset-device', user),
+                onResetTwoFactor: (user) => ask('reset-2fa', user),
               }
             : undefined
         }

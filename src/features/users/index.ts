@@ -4,6 +4,7 @@ export {
   useCreateUser,
   useUpdateUser,
   useResetPassword,
+  useResetTwoFactor,
   useUserCommand,
   type UserCommand,
 } from './api'
