@@ -17,6 +17,8 @@ export const userSchema = z.object({
   permissions: z.array(z.string()),
   /** Signed in with a temporary password: must choose their own before using the dashboard */
   mustChangePassword: z.boolean(),
+  /** Everyone must set up an authenticator app; until then the dashboard sends them to setup */
+  twoFactorEnabled: z.boolean(),
 })
 export type User = z.infer<typeof userSchema>
 
@@ -44,15 +46,58 @@ export const sessionQueryOptions = queryOptions({
   retry: false,
 })
 
-export async function login(input: LoginInput): Promise<User> {
-  setSession(await api.post('/auth/login', tokenResponseSchema, { body: input }))
+/** The password was right but the account has 2FA: send a code with this ticket next */
+const twoFactorChallengeSchema = z.object({
+  twoFactorRequired: z.literal(true),
+  ticket: z.string(),
+  ticketExpiresAt: z.string(),
+})
+export type TwoFactorChallenge = z.infer<typeof twoFactorChallengeSchema>
+
+const loginResponseSchema = z.union([twoFactorChallengeSchema, tokenResponseSchema])
+
+export type LoginOutcome =
+  { kind: 'signed-in'; user: User } | { kind: 'code-required'; challenge: TwoFactorChallenge }
+
+/** Loads the user for a new session; ends it again if they may not use the dashboard */
+async function startSession(): Promise<User> {
   try {
     return await fetchMe()
   } catch (error) {
-    // Signed in but not allowed to use the dashboard: end the session again
     await logout().catch(() => undefined)
     throw error
   }
+}
+
+export async function login(input: LoginInput): Promise<LoginOutcome> {
+  const response = await api.post('/auth/login', loginResponseSchema, { body: input })
+  if ('twoFactorRequired' in response) return { kind: 'code-required', challenge: response }
+  setSession(response)
+  return { kind: 'signed-in', user: await startSession() }
+}
+
+export const twoFactorCodeSchema = z.object({
+  code: z
+    .string()
+    .transform((v) => v.replace(/[\s-]/g, ''))
+    .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit code from your authenticator app')),
+})
+
+export const recoveryCodeSchema = z.object({
+  recoveryCode: z
+    .string()
+    .trim()
+    .min(1, 'Enter one of your recovery codes')
+    .max(40, 'That is too long for a recovery code'),
+})
+
+/** Second sign-in step: one code from the authenticator app, or a recovery code */
+export async function loginWithCode(
+  ticket: string,
+  code: { code: string } | { recoveryCode: string },
+): Promise<User> {
+  setSession(await api.post('/auth/login/2fa', tokenResponseSchema, { body: { ticket, ...code } }))
+  return startSession()
 }
 
 export async function logout() {
