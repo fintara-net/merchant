@@ -12,6 +12,9 @@ export const queryClient = createQueryClient(() => {
 
 export const router = createRouter({
   routeTree,
+  // Where the app is served (BASE_PATH at build time, e.g. /merchant/); links and
+  // redirects stay relative to it
+  basepath: import.meta.env.BASE_URL,
   context: { queryClient },
   defaultPreload: 'intent',
   // Let TanStack Query own caching; the router always calls loaders

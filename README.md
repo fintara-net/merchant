@@ -66,6 +66,18 @@ Every page reads and writes through the backend:
 
 ## Running behind nginx
 
+### Under a path instead of a whole domain
+
+To serve the app under a path such as `http://<server>/merchant/`, build it with that path
+for both the app and the API:
+
+```bash
+BASE_PATH=/merchant/ VITE_API_BASE_URL=/merchant/api/v1 npm run build
+```
+
+nginx then serves `dist/` at `/merchant/` (falling back to `/merchant/index.html`) and
+forwards `/merchant/api/` to the backend's `/api/`.
+
 Serve the frontend and the API from the **same domain over HTTPS**: the refresh cookie is
 `Secure` and `SameSite=Strict`. Build the frontend with `VITE_API_BASE_URL=/api/v1`.
 

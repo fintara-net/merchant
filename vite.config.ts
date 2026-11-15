@@ -5,10 +5,17 @@ import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
 export default defineConfig(({ mode }) => {
-  // Not exposed to the app: only the dev server reads it
-  const { API_PROXY_TARGET = 'http://localhost:5076' } = loadEnv(mode, process.cwd(), '')
+  // Not exposed to the app: only the dev server and the build read these.
+  // BASE_PATH: where the built app is served, e.g. /merchant/ (must start and end with /).
+  const env = loadEnv(mode, process.cwd(), '')
+  const API_PROXY_TARGET = env.API_PROXY_TARGET || 'http://localhost:5076'
+  const BASE_PATH = env.BASE_PATH || '/'
+  if (!BASE_PATH.startsWith('/') || !BASE_PATH.endsWith('/')) {
+    throw new Error(`BASE_PATH must start and end with "/" (got "${BASE_PATH}")`)
+  }
 
   return {
+    base: BASE_PATH,
     plugins: [
       // Must come before the React plugin
       tanstackRouter({ target: 'react', autoCodeSplitting: true }),
