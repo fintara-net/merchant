@@ -64,6 +64,32 @@ Every page reads and writes through the backend:
 - **Transactions** come from an external API that isn't connected yet, so the list is empty.
   Excel export and the Overview figures wait for that data.
 
+## Running behind nginx
+
+Serve the frontend and the API from the **same domain over HTTPS**: the refresh cookie is
+`Secure` and `SameSite=Strict`. Build the frontend with `VITE_API_BASE_URL=/api/v1`.
+
+The backend listens only on this machine, and nginx forwards `/api` to it:
+
+```bash
+ASPNETCORE_URLS=http://127.0.0.1:5000
+```
+
+```nginx
+location /api/ {
+    proxy_pass http://127.0.0.1:5000;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For   $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+The `X-Forwarded-*` lines matter: the backend reads the visitor's IP from them, so rate limits
+apply per visitor rather than to everyone at once, and it knows the request came in over
+HTTPS. It only trusts these headers from nginx on the same machine. If nginx runs on another
+server, list that server's IP under `ForwardedHeaders:KnownProxies`
+(`ForwardedHeaders__KnownProxies__0=10.0.0.5`).
+
 ## Scripts
 
 | Script              | What it does                            |
