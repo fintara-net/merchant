@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { api, setSession, tokenResponseSchema } from '@/lib/api-client'
 
 /**
- * Rules for passwords users choose. They match PasswordRules in
- * Backend/src/Application/Features/Auth/ChangePassword.cs, which checks them again.
+ * Rules for passwords users choose. They match the backend's PasswordRules
+ * (ChangePassword.cs), which checks them again.
  */
 export const PASSWORD_MIN_LENGTH = 12
 export const PASSWORD_MAX_LENGTH = 128

@@ -14,7 +14,7 @@ cp .env.example .env.local   # already done in the scaffold
 npm run dev                  # http://localhost:5173
 ```
 
-The app talks to the real backend (`../Backend`). Start it first; the dev server forwards
+The app talks to the Fintara backend, a separate .NET project. Start it first; the dev server forwards
 `/api` to `API_PROXY_TARGET` (default `http://localhost:5076`), so the browser sees one
 origin and the sign-in cookie just works.
 

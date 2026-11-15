@@ -5,7 +5,7 @@ import { authKeys } from './api'
 
 /**
  * The signed-in user's own two-factor authentication (authenticator app codes).
- * The backend lives in Backend/src/Application/Features/Auth/TwoFactor.
+ * The backend side is in the backend's Features/Authentication/TwoFactor folder.
  */
 
 /** Shown once while setting up: the QR code holds `otpAuthUri`; `secret` is for typing in */
