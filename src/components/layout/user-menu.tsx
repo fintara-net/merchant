@@ -12,7 +12,7 @@ export function UserMenu() {
   const { data: user } = useSuspenseQuery(sessionQueryOptions)
   const [open, setOpen] = useState(false)
 
-  //state for logout confirmation dialog
+  // Sign-out asks for confirmation first
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const ref = useRef<HTMLDivElement>(null)
@@ -49,15 +49,18 @@ export function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary"
+        className="flex items-center gap-2.5 rounded-md p-1 text-left transition-colors hover:bg-accent"
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 font-semibold text-primary">
+        <span
+          aria-hidden
+          className="grid size-8 shrink-0 place-items-center rounded-md bg-navy text-sm font-semibold text-on-navy"
+        >
           {user.name.charAt(0).toUpperCase()}
         </span>
         <span className="hidden min-w-0 sm:block">
-          <span className="block max-w-48 truncate text-sm font-semibold">{user.name}</span>
-          <span className="block max-w-48 truncate text-xs text-muted">
-            {user.organisation?.name ?? user.email}
+          <span className="block max-w-40 truncate text-sm font-semibold">{user.name}</span>
+          <span className="block max-w-40 truncate text-xs text-muted">
+            {USER_TYPE_LABELS[user.userType]}
           </span>
         </span>
         <ChevronDown
@@ -71,21 +74,21 @@ export function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border bg-surface p-1 shadow-lg shadow-brand-600/10"
+          className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-md border border-border bg-surface p-1 shadow-[0_8px_24px_rgb(20_25_42/0.12)]"
         >
           <div className="border-b px-3 py-2.5">
             <p className="truncate text-sm font-semibold">{user.name}</p>
             <p className="truncate text-xs text-muted">{user.email}</p>
             <p className="mt-1.5 truncate text-xs text-muted">
               {USER_TYPE_LABELS[user.userType]}
-              {user.organisation && ` · ${user.organisation.name}`}
+              {user.organisation && `, ${user.organisation.name}`}
             </p>
           </div>
           <Link
             to="/change-password"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent"
           >
             <KeyRound className="size-4" /> Change password
           </Link>
@@ -93,7 +96,7 @@ export function UserMenu() {
             to="/two-factor"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent"
           >
             <ShieldCheck className="size-4" /> Two-factor authentication
           </Link>
@@ -101,10 +104,10 @@ export function UserMenu() {
             type="button"
             role="menuitem"
             onClick={() => {
-              setOpen(false) //close the dropdown
-              setConfirmOpen(true) //then open the popup
+              setOpen(false)
+              setConfirmOpen(true)
             }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-danger transition-colors hover:bg-danger-soft disabled:opacity-50"
           >
             <LogOut className="size-4" /> Sign out
           </button>
@@ -115,22 +118,23 @@ export function UserMenu() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         title="Sign out?"
-        description="You'll need to sign in again to access the dashboard."
+        description="You'll need your password and authenticator code to sign in again."
         className="max-w-sm"
-      >
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={logoutMutation.isPending}
-            onClick={() => logoutMutation.mutate()}
-          >
-            {logoutMutation.isPending ? 'Signing out…' : 'Sign out'}
-          </Button>
-        </div>
-      </Dialog>
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              loading={logoutMutation.isPending}
+              onClick={() => logoutMutation.mutate()}
+            >
+              Sign out
+            </Button>
+          </>
+        }
+      />
     </div>
   )
 }

@@ -1,20 +1,22 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ShieldX } from 'lucide-react'
+import { Page } from '@/components/layout/page'
 import { buttonVariants } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/table'
 
 export const Route = createFileRoute('/_app/forbidden')({
   component: () => (
-    <div className="grid place-items-center py-24 text-center">
-      <span className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
-        <ShieldX className="size-8" />
-      </span>
-      <h1 className="mt-6 text-2xl font-bold">You don't have access to this page</h1>
-      <p className="mt-2 text-sm text-muted">
-        Ask an administrator if you think this is a mistake.
-      </p>
-      <Link to="/" className={buttonVariants({ className: 'mt-6' })}>
-        Go to home page
-      </Link>
-    </div>
+    <Page title="No access" description="Your role doesn't include this page.">
+      <EmptyState
+        icon={<ShieldX />}
+        title="You don't have access to this page"
+        description="Ask your administrator to add it to your role if you need it for your work."
+        action={
+          <Link to="/" className={buttonVariants({ variant: 'outline' })}>
+            Back to the dashboard
+          </Link>
+        }
+      />
+    </Page>
   ),
 })

@@ -7,7 +7,7 @@ interface DialogProps {
   onClose: () => void
   title: string
   description?: ReactNode
-  children: ReactNode
+  children?: ReactNode
   className?: string
   /**
    * dialog: small centred box for confirmations and one-off messages.
@@ -82,9 +82,11 @@ export function Dialog({
               <X className="size-4" />
             </button>
           </div>
-          <div className={cn(sheet ? 'flex-1 overflow-y-auto px-6 py-5' : 'px-6 pb-5')}>
-            {children}
-          </div>
+          {children && (
+            <div className={cn(sheet ? 'flex-1 overflow-y-auto px-6 py-5' : 'px-6 pb-5')}>
+              {children}
+            </div>
+          )}
           {footer && (
             <div
               className={cn(
