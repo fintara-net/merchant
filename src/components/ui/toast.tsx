@@ -52,13 +52,13 @@ export function Toaster() {
         return (
           <div
             key={t.id}
-            className="toast-enter pointer-events-auto flex items-start gap-3 rounded-md bg-navy px-4 py-3 text-sm text-on-navy shadow-[0_8px_24px_rgb(20_25_42/0.25)]"
+            className="toast-enter pointer-events-auto flex items-start gap-3 rounded-md border border-border bg-surface px-4 py-3 text-sm text-foreground shadow-[0_8px_24px_rgb(22_24_42/0.14)]"
           >
             <Icon
               aria-hidden
               className={cn(
                 'mt-0.5 size-4 shrink-0',
-                t.tone === 'success' ? 'text-[#8fd3b0]' : 'text-[#ffb4a6]',
+                t.tone === 'success' ? 'text-success' : 'text-danger',
               )}
             />
             <p className="flex-1">{t.message}</p>
@@ -66,7 +66,7 @@ export function Toaster() {
               type="button"
               onClick={() => dismiss(t.id)}
               aria-label="Dismiss"
-              className="-mr-1 grid size-6 place-items-center rounded-sm text-on-navy-muted hover:text-on-navy"
+              className="-mr-1 grid size-6 place-items-center rounded-sm text-muted hover:bg-accent hover:text-foreground"
             >
               <X className="size-3.5" />
             </button>

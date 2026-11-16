@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ShieldAlert } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/ui/form-actions'
 import { FormError } from '@/components/ui/form-error'
 import { applyFormErrors, type FormErrors } from '@/lib/form-errors'
 import { Field } from '@/components/ui/field'
@@ -113,7 +114,6 @@ export function UserForm({
             readOnly={isEdit}
             autoComplete="off"
             placeholder="Enter username"
-            className="read-only:bg-accent read-only:text-muted"
             aria-invalid={!!errors.username}
             {...form.register('username')}
           />
@@ -146,19 +146,13 @@ export function UserForm({
           // moved to another bank and see its data
           <>
             <Field id="user-type" label="User type" hint="Can't be changed after creation.">
-              <Input
-                id="user-type"
-                readOnly
-                value={USER_TYPE_LABELS[userType]}
-                className="bg-accent text-muted"
-              />
+              <Input id="user-type" readOnly value={USER_TYPE_LABELS[userType]} />
             </Field>
             <Field id="user-organisation" label="Organisation">
               <Input
                 id="user-organisation"
                 readOnly
                 value={organisationName({ userType, bankId, merchantId })}
-                className="bg-accent text-muted"
               />
             </Field>
           </>
@@ -207,7 +201,7 @@ export function UserForm({
             )}
 
             {userType === 'super-admin' && (
-              <div className="flex gap-2 self-end rounded-lg bg-warning-soft p-3 text-xs text-warning">
+              <div className="flex gap-2 self-end rounded-md bg-warning-soft p-3 text-xs text-warning">
                 <ShieldAlert className="size-4 shrink-0" />
                 Full access to all banks, merchants and users.
               </div>
@@ -220,7 +214,7 @@ export function UserForm({
         control={form.control}
         name="status"
         render={({ field }) => (
-          <div className="flex items-center justify-between gap-4 rounded-xl border p-4">
+          <div className="flex items-center justify-between gap-4 rounded-md border border-border p-4">
             <div>
               <Label htmlFor="user-status">Active</Label>
               <p className="mt-0.5 text-xs text-muted">Inactive users can't sign in.</p>
@@ -236,14 +230,14 @@ export function UserForm({
 
       <FormError message={errors.root?.message} />
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <FormActions>
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-      </div>
+      </FormActions>
     </form>
   )
 }

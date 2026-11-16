@@ -1,143 +1,149 @@
-import { Link } from '@tanstack/react-router'
-import { SquarePen, Store, UserCog } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { SearchX, SquarePen, Store, UserCog } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Table, TBody, Td, Th, THead } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
+import { SortableTh, useSort } from '@/components/ui/sortable-th'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import { IssuingBankStatusBadge as StatusBadge } from '@/features/issuing-banks/components/status-badge'
 import type { Merchant } from '../schemas'
 
-/** Tighter cell padding so all 9 columns fit on a laptop screen (same as the users table) */
-const DENSE = 'text-[13px] [&_td]:px-2 [&_th]:px-2'
-
-const ICON_BUTTON =
-  'grid size-8 place-items-center rounded-md bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-primary'
+type SortKey = 'name' | 'merchantCode' | 'status'
 
 interface MerchantsTableProps {
   merchants: Merchant[]
-  /** Omit to hide the Action column (e.g. user can't manage merchants) */
+  /** Omit to hide "Edit details" (e.g. user can't manage merchants) */
   onEdit?: (merchant: Merchant) => void
-  /** Shown when there are no merchants */
+  /** Shown when there are no merchants at all */
   emptyAction?: ReactNode
-  /** Username of each merchant's login, keyed by merchant id */
-  logins: ReadonlyMap<string, string>
-  /** Show the "Manage login" link (needs access to the Users page) */
+  /** Show "Manage login" (needs access to the Users page) */
   canManageLogins?: boolean
+  /** Set when a search or filter hides every merchant */
+  onClearFilters?: () => void
 }
 
 export function MerchantsTable({
   merchants,
   onEdit,
   emptyAction,
-  logins,
   canManageLogins = false,
+  onClearFilters,
 }: MerchantsTableProps) {
+  const navigate = useNavigate()
+  const { sorted, sort, toggle } = useSort<Merchant, SortKey>(
+    merchants,
+    { key: 'name', direction: 'asc' },
+    (merchant, key) => merchant[key],
+  )
+
   if (merchants.length === 0) {
-    return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-16 text-center">
-        <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <Store className="size-6" />
-        </span>
-        <p className="mt-4 font-semibold">No merchants yet</p>
-        <p className="mt-1 text-sm text-muted">Merchants you add will show up here.</p>
-        {emptyAction && <div className="mt-5">{emptyAction}</div>}
-      </div>
+    return onClearFilters ? (
+      <EmptyState
+        icon={<SearchX />}
+        title="No merchants match your search"
+        description="Try a different name, code or email, or clear the filters."
+        action={
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear filters
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        icon={<Store />}
+        title="No merchants yet"
+        description="Adding a merchant also creates its first login, so the merchant can see its own transactions."
+        action={emptyAction}
+      />
     )
   }
 
+  const menuItems = (merchant: Merchant): RowMenuItem[] => [
+    ...(onEdit
+      ? [{ label: 'Edit details', icon: SquarePen, onSelect: () => onEdit(merchant) }]
+      : []),
+    ...(canManageLogins
+      ? [
+          {
+            label: 'Manage login',
+            icon: UserCog,
+            onSelect: () => void navigate({ to: '/users', search: { merchant: merchant.id } }),
+          },
+        ]
+      : []),
+  ]
   const hasActions = !!onEdit || canManageLogins
-
-  const actionButtons = (merchant: Merchant) =>
-    hasActions && (
-      <div className="flex gap-1">
-        {editButton(merchant)}
-        {canManageLogins && (
-          <Link
-            to="/users"
-            search={{ merchant: merchant.id }}
-            aria-label={`Manage login for ${merchant.name}`}
-            title="Manage login"
-            className={ICON_BUTTON}
-          >
-            <UserCog className="size-4" />
-          </Link>
-        )}
-      </div>
-    )
-
-  const editButton = (merchant: Merchant) =>
-    onEdit && (
-      <button
-        type="button"
-        onClick={() => onEdit(merchant)}
-        aria-label={`Edit ${merchant.name}`}
-        title="Edit"
-        className={ICON_BUTTON}
-      >
-        <SquarePen className="size-4" />
-      </button>
-    )
+  const menu = (merchant: Merchant) =>
+    hasActions && <RowMenu label={`Actions for ${merchant.name}`} items={menuItems(merchant)} />
 
   return (
     <>
       {/* Tablet & desktop: table */}
       <div className="hidden md:block">
-        <Table className={DENSE}>
+        <Table>
           <THead>
             <tr>
-              <Th className="w-16">S.N</Th>
-              <Th>Merchant Name</Th>
-              <Th>Merchant Code</Th>
+              <SortableTh column="name" sort={sort} onSort={toggle}>
+                Merchant
+              </SortableTh>
+              <SortableTh column="merchantCode" sort={sort} onSort={toggle}>
+                Code
+              </SortableTh>
               <Th>PAN/VAT</Th>
-              <Th>Phone</Th>
-              <Th>Email</Th>
+              <Th>Contact</Th>
               <Th>Login</Th>
-              <Th>Status</Th>
-              {hasActions && <Th className="w-24">Action</Th>}
+              <SortableTh column="status" sort={sort} onSort={toggle}>
+                Status
+              </SortableTh>
+              {hasActions && (
+                <Th className="w-14">
+                  <span className="sr-only">Actions</span>
+                </Th>
+              )}
             </tr>
           </THead>
           <TBody>
-            {merchants.map((merchant, i) => (
+            {sorted.map((merchant) => (
               <tr key={merchant.id}>
-                <Td className="tabular-nums">{i + 1}</Td>
-                <Td className="max-w-48 truncate" title={merchant.name}>
+                <Td className="max-w-56 truncate font-medium" title={merchant.name}>
                   {merchant.name}
                 </Td>
-                <Td>{merchant.merchantCode}</Td>
-                <Td className="tabular-nums">{merchant.panNumber}</Td>
-                <Td className="tabular-nums">{merchant.phoneNumber}</Td>
-                <Td className="max-w-40 truncate" title={merchant.email}>
-                  {merchant.email}
+                <Td className="font-mono text-sm">{merchant.merchantCode}</Td>
+                <Td>{merchant.panNumber}</Td>
+                <Td className="max-w-56">
+                  <span className="block truncate" title={merchant.email}>
+                    {merchant.email}
+                  </span>
+                  <span className="block text-xs text-muted">{merchant.phoneNumber}</span>
                 </Td>
-                <Td className="max-w-36 truncate" title={logins.get(merchant.id)}>
-                  {logins.get(merchant.id) ?? '—'}
+                <Td className="max-w-40 truncate">
+                  {merchant.loginUsername ?? <span className="text-muted">No login</span>}
                 </Td>
                 <Td>
                   <StatusBadge status={merchant.status} />
                 </Td>
-                {hasActions && <Td className="py-2.5">{actionButtons(merchant)}</Td>}
+                {hasActions && <Td className="py-1.5 text-right">{menu(merchant)}</Td>}
               </tr>
             ))}
           </TBody>
         </Table>
       </div>
 
-      {/* Mobile: stacked cards */}
-      <ul className="flex flex-col divide-y border-y md:hidden">
-        {merchants.map((merchant, i) => (
-          <li key={merchant.id} className="flex items-center gap-3 px-1 py-3">
+      {/* Phone: one row per merchant */}
+      <ul className="divide-y divide-rule md:hidden">
+        {sorted.map((merchant) => (
+          <li key={merchant.id} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm">
-                <span className="mr-1.5 font-normal text-muted tabular-nums">{i + 1}.</span>
-                {merchant.name}
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted">{merchant.merchantCode}</span>
+              <p className="truncate font-medium">{merchant.name}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs text-muted">{merchant.merchantCode}</span>
                 <StatusBadge status={merchant.status} />
               </div>
               <p className="mt-1 truncate text-xs text-muted">
-                {logins.get(merchant.id) ?? 'No login'} · {merchant.email}
+                {merchant.loginUsername ?? 'No login'}, {merchant.email}
               </p>
             </div>
-            {actionButtons(merchant)}
+            {menu(merchant)}
           </li>
         ))}
       </ul>

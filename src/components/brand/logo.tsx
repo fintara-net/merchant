@@ -3,28 +3,20 @@ import { cn } from '@/lib/utils'
 
 /**
  * Text wordmark until a real Fintara logo file is available.
- * `tone="navy"` is for navy surfaces (sidebar, bands); `light` for white ones.
+ * Purple mark with the name in ink, for white surfaces.
  */
-export function Logo({
-  className,
-  compact = false,
-  tone = 'navy',
-}: {
-  className?: string
-  compact?: boolean
-  tone?: 'navy' | 'light'
-}) {
+export function Logo({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span
       className={cn(
         'inline-flex items-center gap-2.5 text-lg font-bold tracking-tight',
-        tone === 'navy' ? 'text-on-navy' : 'text-navy',
+        'text-foreground',
         className,
       )}
     >
       <span
         aria-hidden
-        className="grid size-7 shrink-0 place-items-center rounded-sm bg-gold text-sm font-bold text-navy"
+        className="grid size-7 shrink-0 place-items-center rounded-sm bg-primary text-sm font-bold text-primary-foreground"
       >
         {BRAND.name.charAt(0)}
       </span>

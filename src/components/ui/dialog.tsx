@@ -64,7 +64,7 @@ export function Dialog({
           <div
             className={cn(
               'flex items-start justify-between gap-4',
-              sheet ? 'border-b-2 border-navy px-6 py-4' : 'px-6 pt-5 pb-4',
+              sheet ? 'border-b border-border px-6 py-4' : 'px-6 pt-5 pb-4',
             )}
           >
             <div>

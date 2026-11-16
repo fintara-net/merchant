@@ -24,9 +24,12 @@ export const TBody = (p: ComponentProps<'tbody'>) => (
     )}
   />
 )
-/** Closing total row, ruled in navy like the foot of a statement */
+/** Closing total row, double-ruled like the foot of a statement */
 export const TFoot = (p: ComponentProps<'tfoot'>) => (
-  <tfoot {...p} className={cn('border-t-2 border-navy bg-surface font-semibold', p.className)} />
+  <tfoot
+    {...p}
+    className={cn('border-t-2 border-foreground/80 bg-surface font-semibold', p.className)}
+  />
 )
 export const Th = (p: ComponentProps<'th'>) => (
   <th

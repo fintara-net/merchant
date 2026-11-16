@@ -6,8 +6,6 @@ interface SegmentedProps<T extends string> {
   options: readonly { value: T; label: string }[]
   value: T
   onChange: (value: T) => void
-  /** "navy" sits on a page band; "light" sits on white */
-  tone?: 'light' | 'navy'
   className?: string
 }
 
@@ -20,7 +18,6 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
-  tone = 'light',
   className,
 }: SegmentedProps<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
@@ -40,11 +37,7 @@ export function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn(
-        'inline-flex rounded-md border p-0.5',
-        tone === 'navy' ? 'border-white/20 bg-white/5' : 'border-border bg-surface',
-        className,
-      )}
+      className={cn('inline-flex rounded-md border p-0.5', 'border-border bg-surface', className)}
     >
       {options.map((option, i) => {
         const selected = option.value === value
@@ -62,13 +55,9 @@ export function Segmented<T extends string>({
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               'h-7 rounded-sm px-3 text-sm font-medium whitespace-nowrap transition-colors',
-              tone === 'navy'
-                ? selected
-                  ? 'bg-white text-navy'
-                  : 'text-on-navy-muted hover:text-on-navy'
-                : selected
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted hover:bg-accent hover:text-foreground',
+              selected
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted hover:bg-accent hover:text-foreground',
             )}
           >
             {option.label}

@@ -11,12 +11,12 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
   )
 }
 
-/** Panel title row; the navy rule underneath echoes a statement's section heading. */
+/** Panel title row, ruled off like a statement's section heading. */
 export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'flex min-h-12 flex-wrap items-center gap-3 border-b-2 border-navy px-4 py-2.5',
+        'flex min-h-12 flex-wrap items-center gap-3 border-b border-border px-4 py-2.5',
         className,
       )}
       {...props}

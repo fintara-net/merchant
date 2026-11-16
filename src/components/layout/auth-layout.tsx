@@ -13,26 +13,26 @@ interface AuthLayoutProps {
 }
 
 /**
- * Shared frame for sign-in and the security steps: a navy letterhead column on desktop
- * (a slim navy bar on phones) and the form on white.
+ * Shared frame for sign-in and the security steps: a soft purple letterhead column on
+ * desktop (a slim bar on phones) and the form on white.
  */
 export function AuthLayout({ children, footer, wide = false }: AuthLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-surface lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="flex items-center bg-navy px-6 py-4 text-on-navy lg:flex-col lg:items-stretch lg:px-12 lg:py-12">
+      <aside className="flex items-center border-b border-primary-soft-border bg-primary-soft px-6 py-4 lg:flex-col lg:items-stretch lg:border-r lg:border-b-0 lg:px-12 lg:py-12">
         <Logo />
 
         <div className="mt-auto hidden max-w-sm lg:block">
           <p className="text-2xl leading-snug font-semibold text-balance">
             Transactions and access for banks and merchants, in one statement.
           </p>
-          <p className="mt-4 flex items-start gap-2.5 text-sm text-on-navy-muted">
+          <p className="mt-4 flex items-start gap-2.5 text-sm text-muted">
             <LockKeyhole aria-hidden className="mt-0.5 size-4 shrink-0 text-gold" />
             Every account signs in with a password and a code from an authenticator app.
           </p>
         </div>
 
-        <p className="mt-auto hidden border-t border-white/12 pt-5 text-xs text-on-navy-muted lg:block">
+        <p className="mt-auto hidden border-t border-primary-soft-border pt-5 text-xs text-muted lg:block">
           {BRAND.productName}, powered by {BRAND.poweredBy}. © {new Date().getFullYear()}
         </p>
       </aside>

@@ -53,7 +53,7 @@ export function UserMenu() {
       >
         <span
           aria-hidden
-          className="grid size-8 shrink-0 place-items-center rounded-md bg-navy text-sm font-semibold text-on-navy"
+          className="grid size-8 shrink-0 place-items-center rounded-md bg-primary-soft text-sm font-semibold text-primary"
         >
           {user.name.charAt(0).toUpperCase()}
         </span>

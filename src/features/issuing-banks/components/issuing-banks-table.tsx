@@ -1,42 +1,64 @@
-import { Building2, SquarePen } from 'lucide-react'
+import { Building2, SearchX, SquarePen } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Table, TBody, Td, Th, THead } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { RowMenu } from '@/components/ui/row-menu'
+import { SortableTh, useSort } from '@/components/ui/sortable-th'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import type { IssuingBank } from '../schemas'
 import { IssuingBankStatusBadge } from './status-badge'
 
+type SortKey = 'name' | 'swiftCode' | 'status'
+
 interface IssuingBanksTableProps {
   banks: IssuingBank[]
-  /** Omit to hide the Action column (e.g. user can't manage banks) */
+  /** Omit to hide the actions column (e.g. user can't manage banks) */
   onEdit?: (bank: IssuingBank) => void
-  /** Shown when there are no banks */
+  /** Shown when there are no banks at all */
   emptyAction?: ReactNode
+  /** Set when a search or filter hides every bank */
+  onClearFilters?: () => void
 }
 
-export function IssuingBanksTable({ banks, onEdit, emptyAction }: IssuingBanksTableProps) {
+export function IssuingBanksTable({
+  banks,
+  onEdit,
+  emptyAction,
+  onClearFilters,
+}: IssuingBanksTableProps) {
+  const { sorted, sort, toggle } = useSort<IssuingBank, SortKey>(
+    banks,
+    { key: 'name', direction: 'asc' },
+    (bank, key) => bank[key],
+  )
+
   if (banks.length === 0) {
-    return (
-      <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-16 text-center">
-        <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <Building2 className="size-6" />
-        </span>
-        <p className="mt-4 font-semibold">No issuing banks yet</p>
-        <p className="mt-1 text-sm text-muted">Banks you add will show up here.</p>
-        {emptyAction && <div className="mt-5">{emptyAction}</div>}
-      </div>
+    return onClearFilters ? (
+      <EmptyState
+        icon={<SearchX />}
+        title="No banks match your search"
+        description="Try a different name or SWIFT code, or clear the filters."
+        action={
+          <Button variant="outline" onClick={onClearFilters}>
+            Clear filters
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        icon={<Building2 />}
+        title="No issuing banks yet"
+        description="Add the card-issuing banks that work with Fintara. Each bank's staff can then be given access."
+        action={emptyAction}
+      />
     )
   }
 
-  const editButton = (bank: IssuingBank) =>
+  const menu = (bank: IssuingBank) =>
     onEdit && (
-      <button
-        type="button"
-        onClick={() => onEdit(bank)}
-        aria-label={`Edit ${bank.name}`}
-        title="Edit"
-        className="grid size-8 place-items-center rounded-md bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-primary"
-      >
-        <SquarePen className="size-4" />
-      </button>
+      <RowMenu
+        label={`Actions for ${bank.name}`}
+        items={[{ label: 'Edit details', icon: SquarePen, onSelect: () => onEdit(bank) }]}
+      />
     )
 
   return (
@@ -46,44 +68,49 @@ export function IssuingBanksTable({ banks, onEdit, emptyAction }: IssuingBanksTa
         <Table>
           <THead>
             <tr>
-              <Th className="w-16">S.N</Th>
-              <Th>Bank Name</Th>
-              <Th>Swift Code</Th>
-              <Th>Status</Th>
-              {onEdit && <Th className="w-24">Action</Th>}
+              <SortableTh column="name" sort={sort} onSort={toggle}>
+                Bank
+              </SortableTh>
+              <SortableTh column="swiftCode" sort={sort} onSort={toggle}>
+                SWIFT code
+              </SortableTh>
+              <SortableTh column="status" sort={sort} onSort={toggle}>
+                Status
+              </SortableTh>
+              {onEdit && (
+                <Th className="w-14">
+                  <span className="sr-only">Actions</span>
+                </Th>
+              )}
             </tr>
           </THead>
           <TBody>
-            {banks.map((bank, i) => (
+            {sorted.map((bank) => (
               <tr key={bank.id}>
-                <Td className="tabular-nums">{i + 1}</Td>
-                <Td>{bank.name}</Td>
-                <Td>{bank.swiftCode}</Td>
+                <Td className="font-medium">{bank.name}</Td>
+                <Td className="font-mono text-sm tracking-wide">{bank.swiftCode}</Td>
                 <Td>
                   <IssuingBankStatusBadge status={bank.status} />
                 </Td>
-                {onEdit && <Td className="py-2.5">{editButton(bank)}</Td>}
+                {onEdit && <Td className="py-1.5 text-right">{menu(bank)}</Td>}
               </tr>
             ))}
           </TBody>
         </Table>
       </div>
 
-      {/* Mobile: stacked cards */}
-      <ul className="flex flex-col divide-y border-y md:hidden">
-        {banks.map((bank, i) => (
-          <li key={bank.id} className="flex items-center gap-3 px-1 py-3">
+      {/* Phone: one row per bank */}
+      <ul className="divide-y divide-rule md:hidden">
+        {sorted.map((bank) => (
+          <li key={bank.id} className="flex items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm">
-                <span className="mr-1.5 font-normal text-muted tabular-nums">{i + 1}.</span>
-                {bank.name}
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted">{bank.swiftCode}</span>
+              <p className="truncate font-medium">{bank.name}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs text-muted">{bank.swiftCode}</span>
                 <IssuingBankStatusBadge status={bank.status} />
               </div>
             </div>
-            {editButton(bank)}
+            {menu(bank)}
           </li>
         ))}
       </ul>

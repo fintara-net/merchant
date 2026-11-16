@@ -39,7 +39,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   ),
   notFoundComponent: () => (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="flex h-14 items-center bg-navy px-6">
+      <header className="flex h-14 items-center border-b border-border bg-surface px-6">
         <Link to="/" className="rounded-sm">
           <Logo />
         </Link>

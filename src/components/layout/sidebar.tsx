@@ -9,8 +9,8 @@ import { useUiStore } from '@/stores/ui-store'
 import { NAV_ITEMS } from './nav-items'
 
 /**
- * Navy statement sidebar. The menu is a fixed list filtered by the user's permissions;
- * the current page is raised and its icon turns gold.
+ * Statement sidebar. The menu is a fixed list filtered by the user's permissions;
+ * the current page is tinted purple and its icon turns gold.
  */
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
@@ -31,7 +31,7 @@ export function Sidebar() {
     <>
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-navy text-on-navy transition-[width,translate] duration-200',
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-[width,translate] duration-200',
           'lg:sticky lg:top-0 lg:h-dvh lg:w-60 lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
           collapsed && 'lg:w-16',
@@ -39,7 +39,7 @@ export function Sidebar() {
       >
         <div
           className={cn(
-            'flex h-14 shrink-0 items-center justify-between border-b border-white/10 px-5',
+            'flex h-14 shrink-0 items-center justify-between border-b border-border px-5',
             collapsed && 'lg:justify-center lg:px-0',
           )}
         >
@@ -51,7 +51,7 @@ export function Sidebar() {
             type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
-            className="grid size-8 place-items-center rounded-md text-on-navy-muted hover:bg-white/10 hover:text-on-navy lg:hidden"
+            className="grid size-8 place-items-center rounded-md text-muted hover:bg-accent hover:text-foreground lg:hidden"
           >
             <X className="size-4" />
           </button>
@@ -66,9 +66,9 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               activeOptions={{ exact: to === '/' }}
               className={cn(
-                'group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-on-navy-muted transition-colors',
-                'hover:bg-white/8 hover:text-on-navy',
-                'data-[status=active]:bg-navy-raised data-[status=active]:font-semibold data-[status=active]:text-on-navy',
+                'group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-muted transition-colors',
+                'hover:bg-accent hover:text-foreground',
+                'data-[status=active]:bg-primary-soft data-[status=active]:font-semibold data-[status=active]:text-primary',
                 collapsed && 'lg:justify-center lg:px-0',
               )}
             >
@@ -83,7 +83,7 @@ export function Sidebar() {
 
         <p
           className={cn(
-            'shrink-0 border-t border-white/10 px-5 py-3 text-xs text-on-navy-muted',
+            'shrink-0 border-t border-border px-5 py-3 text-xs text-muted',
             collapsed && 'lg:hidden',
           )}
         >

@@ -4,20 +4,21 @@ import {
   KeyRound,
   Lock,
   LockOpen,
+  SearchX,
   ShieldOff,
   SquarePen,
   Users,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Table, TableEmpty, TBody, Td, Th, THead } from '@/components/ui/table'
+import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
+import { SkeletonRows } from '@/components/ui/skeleton'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { useOrganisationName } from '../organisation'
 import { fullName, USER_TYPE_LABELS, type ManagedUser } from '../schemas'
 import { UserStatusBadge } from './user-status-badge'
-
-/** Tighter cell padding so all 10 columns and 5 action buttons fit on a laptop screen */
-const DENSE = 'text-[13px] [&_td]:px-2 [&_th]:px-2'
 
 export interface UserActions {
   onEdit: (user: ManagedUser) => void
@@ -29,21 +30,26 @@ export interface UserActions {
 
 interface UsersTableProps {
   users: ManagedUser[]
-  startIndex?: number
+  loading?: boolean
   selected: ReadonlySet<string>
   onSelectedChange: (selected: Set<string>) => void
-  /** Omit to hide the Action column (user can't manage users) */
+  /** Omit to hide the actions column (user can't manage users) */
   actions?: UserActions
   emptyAction?: ReactNode
+  /** Set when a filter hides every user */
+  onClearFilters?: () => void
 }
+
+const COLUMNS = 8
 
 export function UsersTable({
   users,
-  startIndex = 0,
+  loading = false,
   selected,
   onSelectedChange,
   actions,
   emptyAction,
+  onClearFilters,
 }: UsersTableProps) {
   const organisationName = useOrganisationName()
   const selectedOnPage = users.filter((u) => selected.has(u.id)).length
@@ -65,154 +71,134 @@ export function UsersTable({
     onSelectedChange(next)
   }
 
-  const header = (
-    <THead>
-      <tr>
-        <Th className="w-9">
-          <Checkbox
-            aria-label="Select all users on this page"
-            checked={allSelected}
-            indeterminate={selectedOnPage > 0 && !allSelected}
-            disabled={users.length === 0}
-            onChange={toggleAll}
-          />
-        </Th>
-        <Th className="w-10">S.N</Th>
-        <Th>Username</Th>
-        <Th>Fullname</Th>
-        <Th>Phone</Th>
-        <Th>Email ID</Th>
-        <Th>User Type</Th>
-        <Th>Organisation</Th>
-        <Th>Status</Th>
-        {actions && (
-          <Th className="sticky right-0 bg-accent shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]">
-            Action
-          </Th>
-        )}
-      </tr>
-    </THead>
-  )
-
-  if (users.length === 0) {
-    return (
-      <>
-        <Table className={DENSE}>{header}</Table>
-        <TableEmpty
-          icon={<Users />}
-          title="No users yet"
-          description="Users you add will appear here."
-          action={emptyAction}
-        />
-      </>
+  if (!loading && users.length === 0) {
+    return onClearFilters ? (
+      <EmptyState
+        icon={<SearchX />}
+        title="No users match these filters"
+        description="Try another user type, or show all users."
+        action={
+          <Button variant="outline" onClick={onClearFilters}>
+            Show all users
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        icon={<Users />}
+        title="No users yet"
+        description="Add the people who need the dashboard. Each gets a temporary password and sets up two-factor sign-in the first time."
+        action={emptyAction}
+      />
     )
   }
 
+  // The main super admin can't be locked, deactivated or reset here (2FA is reset on the server)
+  const menuItems = (u: ManagedUser): RowMenuItem[] => {
+    if (!actions) return []
+    const items: RowMenuItem[] = [
+      { label: 'Edit details', icon: SquarePen, onSelect: () => actions.onEdit(u) },
+    ]
+    if (u.isProtected) return items
+    items.push(
+      {
+        label: 'Reset password',
+        icon: KeyRound,
+        onSelect: () => actions.onResetPassword(u),
+        separated: true,
+      },
+      // Nothing to reset until they've set up an authenticator
+      ...(u.twoFactorEnabled
+        ? [
+            {
+              label: 'Reset two-factor sign-in',
+              icon: ShieldOff,
+              onSelect: () => actions.onResetTwoFactor(u),
+            },
+          ]
+        : []),
+      {
+        label: u.locked ? 'Unlock' : 'Lock',
+        icon: u.locked ? LockOpen : Lock,
+        onSelect: () => actions.onToggleLock(u),
+        tone: u.locked ? undefined : 'danger',
+        separated: true,
+      },
+      {
+        label: u.status === 'active' ? 'Deactivate' : 'Activate',
+        icon: u.status === 'active' ? Ban : CircleCheck,
+        onSelect: () => actions.onToggleStatus(u),
+        tone: u.status === 'active' ? 'danger' : undefined,
+      },
+    )
+    return items
+  }
+
   return (
-    <Table className={DENSE}>
-      {header}
+    <Table>
+      <THead>
+        <tr>
+          <Th className="w-10">
+            <Checkbox
+              aria-label="Select all users on this page"
+              checked={allSelected}
+              indeterminate={selectedOnPage > 0 && !allSelected}
+              disabled={users.length === 0}
+              onChange={toggleAll}
+            />
+          </Th>
+          <Th>Name</Th>
+          <Th>Username</Th>
+          <Th>Contact</Th>
+          <Th>Type</Th>
+          <Th>Organisation</Th>
+          <Th>Status</Th>
+          {actions && (
+            <Th className="w-14">
+              <span className="sr-only">Actions</span>
+            </Th>
+          )}
+        </tr>
+      </THead>
       <TBody>
-        {users.map((u, i) => (
-          <tr key={u.id} className={cn(selected.has(u.id) && 'bg-primary/5')}>
-            <Td>
-              <Checkbox
-                aria-label={`Select ${u.username}`}
-                checked={selected.has(u.id)}
-                onChange={() => toggleOne(u.id)}
-              />
-            </Td>
-            <Td className="tabular-nums">{startIndex + i + 1}</Td>
-            <Td>{u.username}</Td>
-            <Td className="max-w-36 truncate" title={fullName(u)}>
-              {fullName(u)}
-            </Td>
-            <Td className="tabular-nums">{u.phoneNumber}</Td>
-            <Td className="max-w-32 truncate" title={u.email}>
-              {u.email}
-            </Td>
-            <Td>{USER_TYPE_LABELS[u.userType]}</Td>
-            <Td className="max-w-36 truncate" title={organisationName(u)}>
-              {organisationName(u)}
-            </Td>
-            <Td>
-              <UserStatusBadge user={u} />
-            </Td>
-            {actions && (
-              <Td className="sticky right-0 bg-surface py-2.5 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]">
-                <div className="flex gap-1">
-                  <IconAction label={`Edit ${u.username}`} onClick={() => actions.onEdit(u)}>
-                    <SquarePen />
-                  </IconAction>
-                  {/* The main super admin can't be locked, deactivated or reset here (2FA is reset on the server) */}
-                  {!u.isProtected && (
-                    <>
-                      <IconAction
-                        label={`${u.locked ? 'Unlock' : 'Lock'} ${u.username}`}
-                        onClick={() => actions.onToggleLock(u)}
-                      >
-                        {u.locked ? <LockOpen /> : <Lock />}
-                      </IconAction>
-                      <IconAction
-                        label={`${u.status === 'active' ? 'Deactivate' : 'Activate'} ${u.username}`}
-                        tone={u.status === 'active' ? 'danger' : 'success'}
-                        onClick={() => actions.onToggleStatus(u)}
-                      >
-                        {u.status === 'active' ? <Ban /> : <CircleCheck />}
-                      </IconAction>
-                      <IconAction
-                        label={`Reset password for ${u.username}`}
-                        onClick={() => actions.onResetPassword(u)}
-                      >
-                        <KeyRound />
-                      </IconAction>
-                      {/* Nothing to reset until they've set up an authenticator */}
-                      {u.twoFactorEnabled && (
-                        <IconAction
-                          label={`Reset two-factor authentication for ${u.username}`}
-                          tone="danger"
-                          onClick={() => actions.onResetTwoFactor(u)}
-                        >
-                          <ShieldOff />
-                        </IconAction>
-                      )}
-                    </>
-                  )}
-                </div>
+        {loading ? (
+          <SkeletonRows rows={6} columns={actions ? COLUMNS : COLUMNS - 1} />
+        ) : (
+          users.map((u) => (
+            <tr key={u.id} className={cn(selected.has(u.id) && 'bg-primary-soft')}>
+              <Td>
+                <Checkbox
+                  aria-label={`Select ${u.username}`}
+                  checked={selected.has(u.id)}
+                  onChange={() => toggleOne(u.id)}
+                />
               </Td>
-            )}
-          </tr>
-        ))}
+              <Td className="max-w-44 truncate font-medium" title={fullName(u)}>
+                {fullName(u)}
+              </Td>
+              <Td>{u.username}</Td>
+              <Td className="max-w-56">
+                <span className="block truncate" title={u.email}>
+                  {u.email}
+                </span>
+                <span className="block text-xs text-muted">{u.phoneNumber}</span>
+              </Td>
+              <Td>{USER_TYPE_LABELS[u.userType]}</Td>
+              <Td className="max-w-44 truncate" title={organisationName(u)}>
+                {organisationName(u)}
+              </Td>
+              <Td>
+                <UserStatusBadge user={u} />
+              </Td>
+              {actions && (
+                <Td className="py-1.5 text-right">
+                  <RowMenu label={`Actions for ${u.username}`} items={menuItems(u)} />
+                </Td>
+              )}
+            </tr>
+          ))
+        )}
       </TBody>
     </Table>
-  )
-}
-
-function IconAction({
-  label,
-  tone = 'primary',
-  onClick,
-  children,
-}: {
-  label: string
-  tone?: 'primary' | 'danger' | 'success'
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      // Tooltip: just the action word, e.g. "Lock"
-      title={label.replace(/ (for )?\S+$/, '')}
-      className={cn(
-        'grid size-7 place-items-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-primary [&>svg]:size-3.5',
-        tone === 'primary' && 'bg-primary/10 text-primary hover:bg-primary/20',
-        tone === 'danger' && 'bg-danger/10 text-danger hover:bg-danger/20',
-        tone === 'success' && 'bg-success-soft text-success hover:bg-success/15',
-      )}
-    >
-      {children}
-    </button>
   )
 }

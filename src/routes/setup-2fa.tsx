@@ -130,7 +130,7 @@ function SetupSteps({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
 function Step({ number, title, children }: { number: number; title: string; children: ReactNode }) {
   return (
     <li className="grid grid-cols-[auto_1fr] gap-x-3">
-      <span className="grid size-6 place-items-center rounded-sm bg-navy text-xs font-semibold text-on-navy">
+      <span className="grid size-6 place-items-center rounded-sm bg-primary text-xs font-semibold text-primary-foreground">
         {number}
       </span>
       <div className="flex min-w-0 flex-col gap-2">

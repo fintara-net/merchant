@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { ReactNode } from 'react'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/ui/form-actions'
 import { FormError } from '@/components/ui/form-error'
 import { applyFormErrors, type FormErrors } from '@/lib/form-errors'
 import { Field } from '@/components/ui/field'
@@ -146,12 +147,7 @@ export function MerchantForm({
       >
         {isEdit ? (
           <Field id="merchant-login-username" label="Username">
-            <Input
-              id="merchant-login-username"
-              readOnly
-              value={loginUsername ?? 'No login yet'}
-              className="bg-accent text-muted"
-            />
+            <Input id="merchant-login-username" readOnly value={loginUsername ?? 'No login yet'} />
           </Field>
         ) : (
           <>
@@ -201,7 +197,7 @@ export function MerchantForm({
         control={form.control}
         name="status"
         render={({ field }) => (
-          <div className="flex items-center justify-between gap-4 rounded-xl border p-4">
+          <div className="flex items-center justify-between gap-4 rounded-md border border-border p-4">
             <div>
               <Label htmlFor="merchant-status">Active</Label>
               <p className="mt-0.5 text-xs text-muted">
@@ -219,14 +215,14 @@ export function MerchantForm({
 
       <FormError message={errors.root?.message} />
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <FormActions>
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" loading={isSubmitting}>
           {submitLabel}
         </Button>
-      </div>
+      </FormActions>
     </form>
   )
 }

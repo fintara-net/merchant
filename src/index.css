@@ -2,34 +2,34 @@
 @import '@fontsource-variable/public-sans/wght.css';
 
 /*
- * Fintara "bank statement" design tokens. Light only: the dashboard is used in daylit offices.
- * Navy carries the shell and page bands, gold only marks where you are, and green/red are
+ * Fintara "bank statement" design tokens. Light only: white surfaces, the brand purple for
+ * actions and the current page, gold only as the "you are here" marker, and green/red
  * reserved for approved/credit and declined/debit.
  */
 :root {
   color-scheme: light;
 
   /* Ground and surfaces */
-  --background: #f4f6f8;
+  --background: #f5f6fa;
   --surface: #ffffff;
-  --surface-sunken: #f8f9fb; /* table header row, read-only fields */
-  --foreground: #14192a;
-  --muted: #566073; /* secondary text: 5.9:1 on white */
-  --border: #dce1e8;
-  --rule: #e8ecf1; /* table row rules, lighter than borders */
-  --accent: #eef2f7; /* hover fill */
+  --surface-sunken: #f8f9fc; /* table header row, read-only fields */
+  --foreground: #16182a;
+  --muted: #575e72; /* secondary text: 6:1 on white */
+  --border: #dfe2ea;
+  --rule: #eaecf2; /* table row rules, lighter than borders */
+  --accent: #f0f1f6; /* hover fill */
 
-  /* Statement navy: sidebar, page bands, primary buttons */
-  --navy: #14284b;
-  --navy-raised: #1d3763;
-  --on-navy: #ffffff;
-  --on-navy-muted: #b7c3d9; /* 8:1 on navy */
-  --gold: #c79a2b; /* current-place marker only, never text on white */
-
-  --primary: #1d3763;
-  --primary-hover: #14284b;
+  /* Brand purple */
+  --primary: #3e3bca;
+  --primary-hover: #3431b3;
+  --primary-active: #2c299c;
+  --primary-soft: #efeefc; /* page bands, current menu item */
+  --primary-soft-border: #dddbf7;
   --primary-foreground: #ffffff;
-  --ring: #2f62c9;
+  --ring: #3e3bca;
+
+  /* "You are here" marker */
+  --gold: #b58a1f; /* 3.3:1 on white: icons and rules only, never body text */
 
   /* States */
   --success: #1f7046;
@@ -38,7 +38,7 @@
   --warning-soft: #fbf0d9;
   --danger: #b23a2a;
   --danger-soft: #fbe8e4;
-  --info-soft: #e7eef9;
+  --info-soft: #efeefc;
 }
 
 @theme inline {
@@ -50,13 +50,12 @@
   --color-border: var(--border);
   --color-rule: var(--rule);
   --color-accent: var(--accent);
-  --color-navy: var(--navy);
-  --color-navy-raised: var(--navy-raised);
-  --color-on-navy: var(--on-navy);
-  --color-on-navy-muted: var(--on-navy-muted);
   --color-gold: var(--gold);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-border: var(--primary-soft-border);
   --color-primary-foreground: var(--primary-foreground);
   --color-ring: var(--ring);
   --color-success: var(--success);
@@ -103,7 +102,7 @@
     caret-color: var(--primary);
   }
   ::selection {
-    background: #c9d7f0;
+    background: #d9d7f7;
     color: var(--foreground);
   }
   :focus-visible {
@@ -116,7 +115,7 @@
   /* Thin, quiet scrollbars that match the palette */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #c3cad5 transparent;
+    scrollbar-color: #c6cad6 transparent;
   }
 }
 

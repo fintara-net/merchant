@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus, X } from 'lucide-react'
+import { CircleAlert, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Dialog } from '@/components/ui/dialog'
 import { TemporaryPasswordDialog } from '@/components/ui/temporary-password-dialog'
-import { Notice, useNotice } from '@/components/ui/notice'
-import { Label } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
 import { Select } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/table'
+import { toast } from '@/components/ui/toast'
 import { useOrganisationOptions } from '@/features/organisations'
 import { PERMISSIONS, requirePermission, usePermissions } from '@/features/permissions'
 import {
@@ -81,17 +81,23 @@ const CONFIRM_TEXT: Record<
     tone: 'danger',
   },
   'reset-2fa': {
-    title: 'Reset two-factor authentication?',
+    title: 'Reset two-factor sign-in?',
     description: (u) =>
       `Do this if ${u} lost their phone. They'll be signed out, their authenticator app and recovery codes will stop working, and they'll set up a new authenticator the next time they sign in.`,
-    label: 'Reset 2FA',
+    label: 'Reset two-factor',
     tone: 'danger',
   },
 }
 
-/** Shown briefly after actions that have no visible effect in the table */
-const DONE_TEXT: Partial<Record<ConfirmAction, (u: string) => string>> = {
-  'reset-2fa': (u) => `Two-factor authentication reset for ${u}.`,
+/** Confirmation shown after each action */
+const DONE_TEXT: Record<ConfirmAction, (u: string) => string | null> = {
+  lock: (u) => `${u} locked`,
+  unlock: (u) => `${u} unlocked`,
+  deactivate: (u) => `${u} deactivated`,
+  activate: (u) => `${u} activated`,
+  // The temporary-password box is the confirmation
+  'reset-password': () => null,
+  'reset-2fa': (u) => `Two-factor sign-in reset for ${u}`,
 }
 
 const DEFAULT_PAGE_SIZE = 10
@@ -112,10 +118,9 @@ function UsersPage() {
     reset: boolean
   } | null>(null)
   const close = () => setDialog(null)
-  const [notice, showNotice] = useNotice()
 
   const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
-  const { data, isPending, isError } = useQuery(
+  const { data, isPending, isError, refetch } = useQuery(
     usersQueryOptions({
       type: search.type,
       merchant: search.merchant,
@@ -147,6 +152,7 @@ function UsersPage() {
     try {
       if (editing) {
         await updateUser.mutateAsync({ id: editing.id, values })
+        toast.success(`${editing.username} updated`)
       } else {
         const created = await createUser.mutateAsync(values)
         setNewLogin({
@@ -183,10 +189,10 @@ function UsersPage() {
       } else {
         await resetTwoFactor.mutateAsync(user.id)
       }
-      const done = DONE_TEXT[action]
-      if (done) showNotice(done(user.username))
+      const done = DONE_TEXT[action](user.username)
+      if (done) toast.success(done)
     } catch (error) {
-      showNotice(formErrorsFrom(error).root ?? 'That change could not be saved.')
+      toast.error(formErrorsFrom(error).root ?? "That change couldn't be saved. Try again.")
     }
   }
 
@@ -195,115 +201,140 @@ function UsersPage() {
 
   const newUserButton = canManage && (
     <Button onClick={() => setDialog({ mode: 'add' })}>
-      <Plus className="size-4" /> New User
+      <Plus /> New user
     </Button>
   )
 
   const confirmText = dialog?.mode === 'confirm' ? CONFIRM_TEXT[dialog.action] : null
 
+  const clearFilters = () =>
+    void navigate({
+      search: (prev) => ({ ...prev, type: undefined, merchant: undefined, page: undefined }),
+    })
+
   return (
     <Page
-      title="User List"
-      description={
-        total > 0
-          ? `${total} ${total === 1 ? 'user' : 'users'} · ${activeCount} active` +
-            (selected.size > 0 ? ` · ${selected.size} selected` : '')
+      title="User management"
+      description="People who can sign in to the dashboard, and what they can see."
+      figures={
+        data
+          ? [
+              { label: hasFilters ? 'Users shown' : 'Users', value: total },
+              { label: 'Active', value: activeCount },
+              ...(selected.size > 0 ? [{ label: 'Selected', value: selected.size }] : []),
+            ]
           : undefined
       }
-      actions={newUserButton}
-    >
-      <Notice message={notice} />
-
-      {isError && (
-        <p role="alert" className="mb-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
-          Couldn't load users. Please try again.
-        </p>
-      )}
-
-      {(total > 0 || hasFilters) && (
-        <div className="mb-4 flex items-center gap-2">
-          <Label htmlFor="user-type-filter" className="text-sm text-muted">
-            User type
-          </Label>
-          <Select
-            id="user-type-filter"
-            className="w-44"
-            value={search.type ?? ''}
-            onChange={(e) =>
-              void navigate({
-                search: (prev) => ({
-                  ...prev,
-                  type: (e.target.value || undefined) as UserType | undefined,
-                  page: undefined,
-                }),
-              })
-            }
-          >
-            <option value="">All types</option>
-            {USER_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {USER_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </Select>
-          {search.merchant && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-primary/10 py-1 pr-1 pl-2.5 text-sm text-primary">
-              Logins for {merchantFilter?.name ?? 'unknown merchant'}
-              <button
-                type="button"
-                aria-label="Show all users"
-                title="Show all users"
-                onClick={() =>
+      toolbar={
+        (total > 0 || hasFilters) && (
+          <>
+            <div className="w-full sm:w-48">
+              <Select
+                aria-label="User type"
+                value={search.type ?? ''}
+                onChange={(e) =>
                   void navigate({
-                    search: (prev) => ({ ...prev, merchant: undefined, page: undefined }),
+                    search: (prev) => ({
+                      ...prev,
+                      type: (e.target.value || undefined) as UserType | undefined,
+                      page: undefined,
+                    }),
                   })
                 }
-                className="grid size-6 place-items-center rounded hover:bg-primary/15"
               >
-                <X className="size-3.5" />
-              </button>
-            </span>
-          )}
-        </div>
-      )}
-
-      <UsersTable
-        users={isPending ? [] : users}
-        startIndex={(page - 1) * pageSize}
-        selected={selected}
-        onSelectedChange={setSelected}
-        emptyAction={newUserButton}
-        actions={
-          canManage
-            ? {
-                onEdit: (user) => setDialog({ mode: 'edit', user }),
-                onToggleLock: (user) => ask(user.locked ? 'unlock' : 'lock', user),
-                onToggleStatus: (user) =>
-                  ask(user.status === 'active' ? 'deactivate' : 'activate', user),
-                onResetPassword: (user) => ask('reset-password', user),
-                onResetTwoFactor: (user) => ask('reset-2fa', user),
-              }
-            : undefined
-        }
-      />
-
-      <div className="mt-5">
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          onPageChange={(p) => void navigate({ search: (prev) => ({ ...prev, page: p }) })}
-          onPageSizeChange={(size) =>
-            void navigate({ search: (prev) => ({ ...prev, pageSize: size, page: undefined }) })
+                <option value="">All user types</option>
+                {USER_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {USER_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {search.merchant && (
+              <span className="inline-flex h-9 items-center gap-1 rounded-md border border-primary-soft-border bg-primary-soft pr-1 pl-3 text-sm text-primary">
+                Logins for {merchantFilter?.name ?? 'unknown merchant'}
+                <button
+                  type="button"
+                  aria-label="Show all users"
+                  title="Show all users"
+                  onClick={() =>
+                    void navigate({
+                      search: (prev) => ({ ...prev, merchant: undefined, page: undefined }),
+                    })
+                  }
+                  className="grid size-7 place-items-center rounded-sm hover:bg-primary/10"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
+            )}
+          </>
+        )
+      }
+      actions={newUserButton}
+      flush
+    >
+      {isError ? (
+        <EmptyState
+          icon={<CircleAlert />}
+          title="Couldn't load users"
+          description="Check your connection, then try again."
+          action={
+            <Button variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
           }
         />
-      </div>
+      ) : (
+        <>
+          <UsersTable
+            users={users}
+            loading={isPending}
+            selected={selected}
+            onSelectedChange={setSelected}
+            emptyAction={newUserButton}
+            onClearFilters={hasFilters ? clearFilters : undefined}
+            actions={
+              canManage
+                ? {
+                    onEdit: (user) => setDialog({ mode: 'edit', user }),
+                    onToggleLock: (user) => ask(user.locked ? 'unlock' : 'lock', user),
+                    onToggleStatus: (user) =>
+                      ask(user.status === 'active' ? 'deactivate' : 'activate', user),
+                    onResetPassword: (user) => ask('reset-password', user),
+                    onResetTwoFactor: (user) => ask('reset-2fa', user),
+                  }
+                : undefined
+            }
+          />
+          {total > 0 && (
+            <div className="border-t border-border px-4 py-3">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={(p) => void navigate({ search: (prev) => ({ ...prev, page: p }) })}
+                onPageSizeChange={(size) =>
+                  void navigate({
+                    search: (prev) => ({ ...prev, pageSize: size, page: undefined }),
+                  })
+                }
+              />
+            </div>
+          )}
+        </>
+      )}
 
       <Dialog
+        variant="sheet"
         open={dialog?.mode === 'add' || dialog?.mode === 'edit'}
         onClose={close}
         title={editing ? 'Edit user' : 'New user'}
-        description={editing ? `Update details for ${editing.username}.` : 'Add a dashboard user.'}
+        description={
+          editing
+            ? editing.username
+            : 'They get a temporary password and set up two-factor sign-in the first time.'
+        }
         className="max-w-xl"
       >
         <UserForm
