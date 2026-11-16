@@ -1,21 +1,29 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { FileSpreadsheet } from 'lucide-react'
-import { useCallback } from 'react'
+import { CircleAlert, FileSpreadsheet, ReceiptText, SearchX } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/pagination'
+import { Segmented } from '@/components/ui/segmented'
+import { EmptyState } from '@/components/ui/table'
 import { sessionQueryOptions } from '@/features/auth/api'
 import { Can, PERMISSIONS, requirePermission } from '@/features/permissions'
 import {
   applyScope,
+  DATE_RANGE_LABELS,
+  DATE_RANGES,
+  DEFAULT_DATE_RANGE,
   DEFAULT_PAGE_SIZE,
   PAGE_SIZES,
   transactionSearchSchema,
+  TransactionDetails,
   TransactionFilters,
+  TransactionSearchBar,
   TransactionsTable,
   transactionScope,
   transactionsQueryOptions,
+  type Transaction,
   type TransactionSearch,
 } from '@/features/transactions'
 
@@ -26,6 +34,9 @@ export const Route = createFileRoute('/_app/transactions/')({
   component: TransactionsPage,
 })
 
+const RANGE_OPTIONS = DATE_RANGES.map((r) => ({ value: r, label: DATE_RANGE_LABELS[r] }))
+const COUNT = new Intl.NumberFormat('en-IN')
+
 function TransactionsPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -33,12 +44,22 @@ function TransactionsPage() {
   const scope = transactionScope(user)
   // The backend applies the same bank/merchant restriction from the signed-in user
   const filters = applyScope(search, scope)
-  const { data, isError } = useQuery(transactionsQueryOptions(filters))
+  const { data, isPending, isError, refetch } = useQuery(transactionsQueryOptions(filters))
+  const [open, setOpen] = useState<Transaction | null>(null)
 
+  const range = search.range ?? DEFAULT_DATE_RANGE
   const page = search.page ?? 1
   const pageSize = search.pageSize ?? DEFAULT_PAGE_SIZE
   const transactions = data?.items ?? []
   const total = data?.total ?? 0
+  // Filters the user chose in the toolbar (the period is always set)
+  const filtered = Boolean(
+    search.status ||
+    search.mode ||
+    search.q ||
+    (scope.showBankFilter && search.bank) ||
+    (scope.showMerchantFilter && search.merchant),
+  )
 
   // Any filter change goes back to page 1, unless the change *is* the page
   const update = useCallback(
@@ -46,18 +67,60 @@ function TransactionsPage() {
       void navigate({ search: (prev) => ({ ...prev, page: undefined, ...patch }), replace: true }),
     [navigate],
   )
+  const clearFilters = () =>
+    void navigate({ search: (prev) => ({ range: prev.range, pageSize: prev.pageSize }) })
+
+  const period = DATE_RANGE_LABELS[range]
+  const description = [
+    scope.organisationName ?? 'All banks and merchants',
+    period,
+    data ? `${COUNT.format(total)} ${total === 1 ? 'transaction' : 'transactions'}` : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+
+  const empty = filtered ? (
+    <EmptyState
+      icon={<SearchX />}
+      title="No transactions match these filters"
+      description={`Nothing in ${period.toLowerCase()} matches. Try another filter or a longer period.`}
+      action={
+        <Button variant="outline" onClick={clearFilters}>
+          Clear filters
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={<ReceiptText />}
+      title={`No transactions for ${period.toLowerCase()}`}
+      description="Card and QR payments appear here as they are processed. Try a longer period if you expected some."
+    />
+  )
 
   return (
     <Page
-      title="Transaction List"
-      description={scope.organisationName ?? undefined}
+      title="Transactions"
+      description={description}
+      bandAside={
+        <Segmented
+          label="Period"
+          options={RANGE_OPTIONS}
+          value={range}
+          onChange={(r) => update({ range: r })}
+          className="max-w-full overflow-x-auto"
+        />
+      }
+      toolbar={<TransactionSearchBar value={filters} onChange={update} />}
       actions={
         <Can permission={PERMISSIONS.TRANSACTIONS_EXPORT}>
-          <Button disabled={total === 0} title={total === 0 ? 'Nothing to export yet' : undefined}>
-            <FileSpreadsheet className="size-4" /> Export to Excel
+          {/* Export is built once transactions are connected */}
+          <Button variant="outline" disabled title="Excel export isn't available yet">
+            <FileSpreadsheet /> Export
           </Button>
         </Can>
       }
+      flush
     >
       <TransactionFilters
         value={filters}
@@ -65,31 +128,46 @@ function TransactionsPage() {
         showBankFilter={scope.showBankFilter}
         showMerchantFilter={scope.showMerchantFilter}
       />
-
-      {isError && (
-        <p role="alert" className="mt-5 rounded-lg bg-danger/10 p-3 text-sm text-danger">
-          Couldn't load transactions. Please try again.
-        </p>
+      {isError ? (
+        <EmptyState
+          icon={<CircleAlert />}
+          title="Couldn't load transactions"
+          description="Check your connection, then try again."
+          action={
+            <Button variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <TransactionsTable
+            transactions={transactions}
+            loading={isPending}
+            onOpen={setOpen}
+            hideBankColumn={!scope.showBankColumn}
+            empty={empty}
+          />
+          {total > 0 && (
+            <div className="border-t border-border px-4 py-3">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                pageSizeOptions={PAGE_SIZES}
+                onPageChange={(p) => update({ page: p })}
+                onPageSizeChange={(size) => update({ pageSize: size })}
+              />
+            </div>
+          )}
+        </>
       )}
 
-      <div className="mt-5">
-        <TransactionsTable
-          transactions={transactions}
-          startIndex={(page - 1) * pageSize}
-          hideBankColumn={!scope.showBankColumn}
-        />
-      </div>
-
-      <div className="mt-5">
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          pageSizeOptions={PAGE_SIZES}
-          onPageChange={(p) => update({ page: p })}
-          onPageSizeChange={(size) => update({ pageSize: size })}
-        />
-      </div>
+      <TransactionDetails
+        transaction={open}
+        onClose={() => setOpen(null)}
+        showBank={scope.showBankColumn}
+      />
     </Page>
   )
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatAmount, formatTenure, formatTransactionDate, maskCardNumber } from './format'
+import {
+  formatAmount,
+  formatMoney,
+  formatTenure,
+  formatTransactionDate,
+  maskCardNumber,
+} from './format'
 
 describe('transaction formatting', () => {
   it('formats amounts from paisa with Nepali grouping', () => {
@@ -35,5 +41,13 @@ describe('transaction search params', () => {
     expect(transactionSearchSchema.parse({ status: 'pending', mode: 'qr', page: -3 })).toEqual({
       mode: 'qr',
     })
+  })
+})
+
+describe('formatMoney', () => {
+  it('always shows two decimals with Nepali grouping', () => {
+    expect(formatMoney(10_000_000)).toBe('1,00,000.00')
+    expect(formatMoney(1_735_050)).toBe('17,350.50')
+    expect(formatMoney(0)).toBe('0.00')
   })
 })

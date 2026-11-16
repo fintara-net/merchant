@@ -6,6 +6,16 @@ export function formatAmount(minor: number, currency = 'NPR') {
   return `${currency}. ${value}`
 }
 
+const MONEY = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/**
+ * 500000 (paisa) → "5,000.00" for statement columns, where the header names the currency.
+ * Nepali/Indian digit grouping (1,00,000.00).
+ */
+export function formatMoney(minor: number) {
+  return MONEY.format(minor / 100)
+}
+
 /** ISO date → "2026-Oct-28 11:07 AM" in the viewer's local time */
 export function formatTransactionDate(iso: string) {
   const d = new Date(iso)

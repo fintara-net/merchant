@@ -1,20 +1,17 @@
 import { Search, X } from 'lucide-react'
-import { useEffect, useId, useState, type ReactNode } from 'react'
-import { Input, Label } from '@/components/ui/input'
+import { useEffect, useState } from 'react'
+import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { useOrganisationOptions } from '@/features/organisations'
 import { cn } from '@/lib/utils'
 import {
-  DATE_RANGE_LABELS,
-  DATE_RANGES,
-  DEFAULT_DATE_RANGE,
   PAYMENT_MODE_LABELS,
   PAYMENT_MODES,
   SEARCH_FIELD_LABELS,
+  SEARCH_FIELD_PLACEHOLDERS,
   SEARCH_FIELDS,
   TRANSACTION_STATUS_LABELS,
   TRANSACTION_STATUSES,
-  type DateRange,
   type PaymentMode,
   type SearchField,
   type TransactionSearch,
@@ -30,28 +27,42 @@ interface TransactionFiltersProps {
   showMerchantFilter?: boolean
 }
 
-/**
- * Layout per number of dropdowns. Container queries make it follow the card
- * width, so it adapts when the sidebar collapses. Five dropdowns need a wider
- * card before everything fits on one line.
- */
-const LAYOUT = {
-  4: {
-    row: '@5xl:flex-nowrap',
-    grid: '@2xl:grid-cols-4 @5xl:w-auto @5xl:grid-cols-[repeat(4,9rem)]',
-    search: '@5xl:w-auto',
-    searchBy: '@5xl:w-44',
-    searchBox: '@5xl:w-52 @5xl:flex-none',
-  },
-  5: {
-    row: '@7xl:flex-nowrap',
-    grid: '@2xl:grid-cols-3 @4xl:grid-cols-5 @7xl:w-auto @7xl:grid-cols-[repeat(5,9rem)]',
-    search: '@7xl:w-auto',
-    searchBy: '@7xl:w-44',
-    searchBox: '@7xl:w-52 @7xl:flex-none',
-  },
-} as const
+/** Search box with a "search by" picker, for the toolbar row above the register. */
+export function TransactionSearchBar({
+  value,
+  onChange,
+}: Pick<TransactionFiltersProps, 'value' | 'onChange'>) {
+  const searchBy = value.searchBy ?? 'tid'
+  return (
+    <div className="flex w-full gap-2 sm:w-auto">
+      <div className="w-36 shrink-0">
+        <Select
+          aria-label="Search by"
+          value={searchBy}
+          onChange={(e) => onChange({ searchBy: e.target.value as SearchField })}
+        >
+          {SEARCH_FIELDS.map((f) => (
+            <option key={f} value={f}>
+              {SEARCH_FIELD_LABELS[f]}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <SearchBox
+        // Remount when the URL value changes from outside (e.g. back button)
+        key={value.q ?? ''}
+        initial={value.q ?? ''}
+        label={SEARCH_FIELD_PLACEHOLDERS[searchBy]}
+        onSearch={(q) => onChange({ q: q || undefined })}
+      />
+    </div>
+  )
+}
 
+/**
+ * The dropdown filters, in their own row above the register. Each dropdown's first option
+ * names what it filters ("All statuses"), so they need no separate labels.
+ */
 export function TransactionFilters({
   value,
   onChange,
@@ -59,148 +70,82 @@ export function TransactionFilters({
   showMerchantFilter = true,
 }: TransactionFiltersProps) {
   const { banks, merchants } = useOrganisationOptions()
-  const searchBy = value.searchBy ?? 'tid'
-  const layout = LAYOUT[showBankFilter && showMerchantFilter ? 5 : 4]
 
   return (
-    <div className="@container">
-      <div className={cn('flex flex-wrap items-end justify-between gap-4', layout.row)}>
-        <div className={cn('grid w-full grid-cols-2 gap-3', layout.grid)}>
-          <Field label="Date Range">
-            {(id) => (
-              <Select
-                id={id}
-                value={value.range ?? DEFAULT_DATE_RANGE}
-                onChange={(e) => onChange({ range: e.target.value as DateRange })}
-              >
-                {DATE_RANGES.map((r) => (
-                  <option key={r} value={r}>
-                    {DATE_RANGE_LABELS[r]}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+    <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-sunken px-4 py-3 sm:flex sm:flex-wrap">
+      <Select
+        aria-label="Status"
+        className="sm:w-40"
+        value={value.status ?? ''}
+        onChange={(e) =>
+          onChange({ status: (e.target.value || undefined) as TransactionStatus | undefined })
+        }
+      >
+        <option value="">All statuses</option>
+        {TRANSACTION_STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {TRANSACTION_STATUS_LABELS[s]}
+          </option>
+        ))}
+      </Select>
 
-          <Field label="Transaction Status">
-            {(id) => (
-              <Select
-                id={id}
-                value={value.status ?? ''}
-                onChange={(e) =>
-                  onChange({
-                    status: (e.target.value || undefined) as TransactionStatus | undefined,
-                  })
-                }
-              >
-                <option value="">All</option>
-                {TRANSACTION_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {TRANSACTION_STATUS_LABELS[s]}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+      <Select
+        aria-label="Payment mode"
+        className="sm:w-48"
+        value={value.mode ?? ''}
+        onChange={(e) =>
+          onChange({ mode: (e.target.value || undefined) as PaymentMode | undefined })
+        }
+      >
+        <option value="">All payment modes</option>
+        {PAYMENT_MODES.map((m) => (
+          <option key={m} value={m}>
+            {PAYMENT_MODE_LABELS[m]}
+          </option>
+        ))}
+      </Select>
 
-          <Field label="Payment Mode">
-            {(id) => (
-              <Select
-                id={id}
-                value={value.mode ?? ''}
-                onChange={(e) =>
-                  onChange({ mode: (e.target.value || undefined) as PaymentMode | undefined })
-                }
-              >
-                <option value="">All</option>
-                {PAYMENT_MODES.map((m) => (
-                  <option key={m} value={m}>
-                    {PAYMENT_MODE_LABELS[m]}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+      {showBankFilter && (
+        <ClearableSelect
+          label="Issuing bank"
+          value={value.bank}
+          allLabel="All banks"
+          options={banks}
+          onChange={(bank) => onChange({ bank })}
+        />
+      )}
 
-          {showBankFilter && (
-            <Field label="Issuing Bank">
-              {(id) => (
-                <ClearableSelect
-                  id={id}
-                  value={value.bank}
-                  allLabel="All Banks"
-                  clearLabel="Clear issuing bank"
-                  options={banks}
-                  onChange={(bank) => onChange({ bank })}
-                />
-              )}
-            </Field>
-          )}
-
-          {showMerchantFilter && (
-            <Field label="Merchant">
-              {(id) => (
-                <ClearableSelect
-                  id={id}
-                  value={value.merchant}
-                  allLabel="All Merchants"
-                  clearLabel="Clear merchant"
-                  options={merchants}
-                  onChange={(merchant) => onChange({ merchant })}
-                />
-              )}
-            </Field>
-          )}
-        </div>
-
-        <div className={cn('flex w-full flex-col gap-3 @lg:flex-row', layout.search)}>
-          <div className={cn('@lg:w-1/2', layout.searchBy)}>
-            <Select
-              aria-label="Search by"
-              value={searchBy}
-              onChange={(e) => onChange({ searchBy: e.target.value as SearchField })}
-            >
-              {SEARCH_FIELDS.map((f) => (
-                <option key={f} value={f}>
-                  {SEARCH_FIELD_LABELS[f]}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <SearchBox
-            // Remount when the URL value changes from outside (e.g. back button)
-            key={value.q ?? ''}
-            initial={value.q ?? ''}
-            placeholder={`Search ${SEARCH_FIELD_LABELS[searchBy]}`}
-            className={layout.searchBox}
-            onSearch={(q) => onChange({ q: q || undefined })}
-          />
-        </div>
-      </div>
+      {showMerchantFilter && (
+        <ClearableSelect
+          label="Merchant"
+          value={value.merchant}
+          allLabel="All merchants"
+          options={merchants}
+          onChange={(merchant) => onChange({ merchant })}
+        />
+      )}
     </div>
   )
 }
 
 /** Dropdown with an "All" option and an × button to go back to it */
 function ClearableSelect({
-  id,
+  label,
   value,
   allLabel,
-  clearLabel,
   options,
   onChange,
 }: {
-  id: string
+  label: string
   value: string | undefined
   allLabel: string
-  clearLabel: string
   options: readonly { id: string; name: string }[]
   onChange: (value: string | undefined) => void
 }) {
   return (
-    <div className="relative">
+    <div className="relative sm:w-52">
       <Select
-        id={id}
+        aria-label={label}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value || undefined)}
         className={value ? 'pr-16' : undefined}
@@ -216,8 +161,8 @@ function ClearableSelect({
         <button
           type="button"
           onClick={() => onChange(undefined)}
-          aria-label={clearLabel}
-          className="absolute top-1/2 right-8 grid size-6 -translate-y-1/2 place-items-center rounded text-muted hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
+          aria-label={`Clear ${label.toLowerCase()}`}
+          className="absolute top-1/2 right-8 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted hover:bg-accent hover:text-foreground"
         >
           <X className="size-3.5" />
         </button>
@@ -226,27 +171,15 @@ function ClearableSelect({
   )
 }
 
-function Field({ label, children }: { label: string; children: (id: string) => ReactNode }) {
-  const id = useId()
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="font-medium">
-        {label}
-      </Label>
-      {children(id)}
-    </div>
-  )
-}
-
 /** Updates the search 300ms after typing stops, so we don't fire a request per keystroke. */
 function SearchBox({
   initial,
-  placeholder,
+  label,
   className,
   onSearch,
 }: {
   initial: string
-  placeholder: string
+  label: string
   className?: string
   onSearch: (q: string) => void
 }) {
@@ -259,14 +192,17 @@ function SearchBox({
   }, [text, initial, onSearch])
 
   return (
-    <div className={cn('relative @lg:flex-1', className)}>
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+    <div className={cn('relative min-w-0 flex-1 sm:w-64 sm:flex-none', className)}>
+      <Search
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
+      />
       <Input
         type="search"
-        aria-label="Search transactions"
+        aria-label={label}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={placeholder}
+        placeholder={label}
         className="pl-9"
       />
     </div>

@@ -8,16 +8,16 @@ export type DateRange = (typeof DATE_RANGES)[number]
 export const DATE_RANGE_LABELS: Record<DateRange, string> = {
   today: 'Today',
   yesterday: 'Yesterday',
-  '7d': 'Last 7 Days',
-  '30d': 'Last 30 Days',
-  month: 'This Month',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  month: 'This month',
 }
 export const DEFAULT_DATE_RANGE: DateRange = '7d'
 
 export const TRANSACTION_STATUSES = ['success', 'failed'] as const
 export type TransactionStatus = (typeof TRANSACTION_STATUSES)[number]
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
-  success: 'Success',
+  success: 'Successful',
   failed: 'Failed',
 }
 
@@ -31,10 +31,17 @@ export const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {
 export const SEARCH_FIELDS = ['tid', 'rrn', 'card', 'store'] as const
 export type SearchField = (typeof SEARCH_FIELDS)[number]
 export const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
-  tid: 'Terminal Id',
-  rrn: 'RRN/Ref ID',
-  card: 'Card Number',
-  store: 'Store Name',
+  tid: 'Terminal ID',
+  rrn: 'RRN / reference',
+  card: 'Card number',
+  store: 'Store name',
+}
+
+export const SEARCH_FIELD_PLACEHOLDERS: Record<SearchField, string> = {
+  tid: 'Search by terminal ID',
+  rrn: 'Search by RRN or reference',
+  card: 'Search by card number',
+  store: 'Search by store name',
 }
 
 export const PAGE_SIZES = [10, 25, 50] as const
