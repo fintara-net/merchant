@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
-import { ChevronRight, Menu } from 'lucide-react'
+import { ChevronRight, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { sessionQueryOptions } from '@/features/auth/api'
 import { useUiStore } from '@/stores/ui-store'
@@ -10,6 +10,8 @@ import { UserMenu } from './user-menu'
 
 export function AppShell() {
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen)
+  const collapsed = useUiStore((s) => s.sidebarCollapsed)
+  const toggleSidebar = useUiStore((s) => s.toggleSidebar)
 
   return (
     <div className="flex min-h-dvh">
@@ -25,6 +27,18 @@ export function AppShell() {
           >
             <Menu />
             <span className="sr-only">Open menu</span>
+          </Button>
+          {/* Desktop: shrink the sidebar to icons and back. Kept up here so it is always reachable. */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleSidebar}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Expand menu' : 'Collapse menu'}
+            className="-ml-1 hidden lg:inline-flex"
+          >
+            {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+            <span className="sr-only">{collapsed ? 'Expand menu' : 'Collapse menu'}</span>
           </Button>
           <Breadcrumb />
           <div className="ml-auto flex items-center gap-4">

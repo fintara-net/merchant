@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { Logo } from '@/components/brand/logo'
 import { BRAND } from '@/config/brand'
@@ -14,7 +14,6 @@ import { NAV_ITEMS } from './nav-items'
  */
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
-  const toggleSidebar = useUiStore((s) => s.toggleSidebar)
   const mobileOpen = useUiStore((s) => s.mobileNavOpen)
   const setMobileOpen = useUiStore((s) => s.setMobileNavOpen)
   const { can } = usePermissions()
@@ -82,29 +81,14 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="shrink-0 border-t border-white/10 p-2.5">
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
-            title={collapsed ? 'Expand menu' : undefined}
-            className={cn(
-              'hidden h-9 w-full items-center gap-3 rounded-md px-3 text-sm text-on-navy-muted transition-colors hover:bg-white/8 hover:text-on-navy lg:flex',
-              collapsed && 'lg:justify-center lg:px-0',
-            )}
-          >
-            {collapsed ? (
-              <PanelLeftOpen aria-hidden className="size-4.5" />
-            ) : (
-              <>
-                <PanelLeftClose aria-hidden className="size-4.5" /> Collapse menu
-              </>
-            )}
-          </button>
-          <p className={cn('px-3 pt-2 pb-1 text-xs text-on-navy-muted', collapsed && 'lg:hidden')}>
-            Powered by {BRAND.poweredBy}
-          </p>
-        </div>
+        <p
+          className={cn(
+            'shrink-0 border-t border-white/10 px-5 py-3 text-xs text-on-navy-muted',
+            collapsed && 'lg:hidden',
+          )}
+        >
+          Powered by {BRAND.poweredBy}
+        </p>
       </aside>
 
       {mobileOpen && (
