@@ -55,7 +55,7 @@ export function RecoveryCodes({
     <div className="flex flex-col gap-5">
       <ul
         aria-label="Recovery codes"
-        className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-xl border bg-background p-4 font-mono text-sm tracking-wider select-all"
+        className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-md border border-border bg-surface-sunken p-4 font-mono text-sm tracking-wider select-all"
       >
         {codes.map((code) => (
           <li key={code}>{code}</li>
@@ -82,7 +82,7 @@ export function RecoveryCodes({
         I&apos;ve saved these codes somewhere safe, like a password manager.
       </label>
 
-      <Button className="h-11 font-semibold" disabled={!saved} onClick={onDone}>
+      <Button className="h-10 self-start" disabled={!saved} onClick={onDone}>
         {doneLabel}
       </Button>
     </div>

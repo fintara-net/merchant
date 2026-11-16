@@ -7,11 +7,10 @@ import { useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { AuthHeading, AuthLayout } from '@/components/layout/auth-layout'
 import { Field } from '@/components/ui/field'
 import { FormError } from '@/components/ui/form-error'
 import { Input } from '@/components/ui/input'
-import { BRAND } from '@/config/brand'
 import { authKeys, sessionQueryOptions, twoFactorCodeSchema } from '@/features/auth/api'
 import { RecoveryCodes } from '@/features/auth/components/recovery-codes'
 import { SignOutLink } from '@/features/auth/components/sign-out-link'
@@ -62,47 +61,30 @@ function SetupTwoFactorPage() {
   }
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-background px-4 py-10">
-      <div className="w-full max-w-lg">
-        <p className="mb-4 text-center text-sm font-semibold text-primary">{BRAND.name}</p>
-        <Card>
-          <CardContent className="p-6 sm:p-8">
-            {recoveryCodes ? (
-              <>
-                <h1 className="text-xl font-bold tracking-tight">Save your recovery codes</h1>
-                <p className="mt-1.5 mb-6 text-sm text-muted">
-                  Two-factor authentication is on. If you lose your phone, each of these codes signs
-                  you in once. They won&apos;t be shown again.
-                </p>
-                <RecoveryCodes
-                  codes={recoveryCodes}
-                  accountName={user.username}
-                  onDone={() => void finish()}
-                  doneLabel="Continue to dashboard"
-                />
-              </>
-            ) : (
-              <>
-                <h1 className="text-xl font-bold tracking-tight">
-                  Set up two-factor authentication
-                </h1>
-                <p className="mt-1.5 text-sm text-muted">
-                  Each time you sign in, you&apos;ll enter your password and a code from an
-                  authenticator app on your phone, so a stolen password alone can&apos;t be used to
-                  get in.
-                </p>
-                <SetupSteps onEnabled={setRecoveryCodes} />
-              </>
-            )}
-          </CardContent>
-        </Card>
-        {!recoveryCodes && (
-          <p className="mt-4 text-center text-sm text-muted">
-            <SignOutLink />
-          </p>
-        )}
-      </div>
-    </main>
+    <AuthLayout wide footer={recoveryCodes ? undefined : <SignOutLink />}>
+      {recoveryCodes ? (
+        <>
+          <AuthHeading
+            title="Save your recovery codes"
+            description="Two-factor authentication is on. If you lose your phone, each of these codes signs you in once. They won't be shown again."
+          />
+          <RecoveryCodes
+            codes={recoveryCodes}
+            accountName={user.username}
+            onDone={() => void finish()}
+            doneLabel="Continue to the dashboard"
+          />
+        </>
+      ) : (
+        <>
+          <AuthHeading
+            title="Set up two-factor authentication"
+            description="Every account signs in with a password and a code from an authenticator app, so a stolen password alone can't be used."
+          />
+          <SetupSteps onEnabled={setRecoveryCodes} />
+        </>
+      )}
+    </AuthLayout>
   )
 }
 
@@ -111,14 +93,14 @@ function SetupSteps({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
 
   if (setup.isPending) {
     return (
-      <p className="mt-8 flex items-center gap-2 text-sm text-muted">
+      <p className="flex items-center gap-2 text-sm text-muted">
         <Loader2 className="size-4 animate-spin" /> Preparing your QR code…
       </p>
     )
   }
   if (setup.isError) {
     return (
-      <div className="mt-6 flex flex-col items-start gap-3">
+      <div className="flex flex-col items-start gap-3">
         <FormError message={formErrorsFrom(setup.error).root ?? "Couldn't start setup."} />
         <Button variant="outline" onClick={() => void setup.refetch()}>
           Try again
@@ -128,7 +110,7 @@ function SetupSteps({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
   }
 
   return (
-    <ol className="mt-6 flex flex-col gap-6">
+    <ol className="flex flex-col gap-6">
       <Step number={1} title="Get an authenticator app">
         <p className="text-sm text-muted">
           For example Google Authenticator or Microsoft Authenticator, from your phone&apos;s app
@@ -148,7 +130,7 @@ function SetupSteps({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
 function Step({ number, title, children }: { number: number; title: string; children: ReactNode }) {
   return (
     <li className="grid grid-cols-[auto_1fr] gap-x-3">
-      <span className="grid size-6 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+      <span className="grid size-6 place-items-center rounded-sm bg-navy text-xs font-semibold text-on-navy">
         {number}
       </span>
       <div className="flex min-w-0 flex-col gap-2">
@@ -173,8 +155,7 @@ function SecretDisplay({ setup }: { setup: TwoFactorSetup }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* White behind the code even in dark mode, so every camera can read it */}
-      <div className="self-start rounded-xl border bg-white p-3">
+      <div className="self-start rounded-md border border-border bg-white p-3">
         <QRCodeSVG
           value={setup.otpAuthUri}
           size={176}
@@ -190,11 +171,11 @@ function SecretDisplay({ setup }: { setup: TwoFactorSetup }) {
         .
       </p>
       <details className="text-sm">
-        <summary className="cursor-pointer font-medium text-primary">
+        <summary className="cursor-pointer font-medium text-primary underline-offset-4 hover:underline">
           Can&apos;t scan it? Enter a setup key instead
         </summary>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <code className="rounded-lg border bg-background px-3 py-2 font-mono text-sm tracking-wider select-all">
+          <code className="rounded-md border border-border bg-surface-sunken px-3 py-2 font-mono text-sm tracking-wider select-all">
             {formatSecret(setup.secret)}
           </code>
           <Button variant="outline" size="sm" onClick={() => void copy()}>
@@ -253,14 +234,13 @@ function ConfirmForm({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={7}
-          className="h-12 max-w-48 text-center font-mono text-xl tracking-[0.4em] tabular-nums"
+          className="h-12 max-w-48 text-center text-xl font-semibold tracking-[0.4em]"
           aria-invalid={!!errors.code}
           {...form.register('code')}
         />
       </Field>
       <FormError message={errors.root?.message} />
-      <Button type="submit" className="h-11 font-semibold" disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+      <Button type="submit" className="h-10 self-start" loading={isSubmitting}>
         {isSubmitting ? 'Checking…' : 'Turn on two-factor authentication'}
       </Button>
     </form>

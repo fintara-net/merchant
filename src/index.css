@@ -88,11 +88,6 @@
   --text-xl--line-height: 1.625rem;
   --text-2xl: 1.375rem;
   --text-2xl--line-height: 1.875rem;
-
-  /* Kept until the sign-in screens are redesigned (phase 3) */
-  --color-brand-400: #796dff;
-  --color-brand-600: #3e3bca;
-  --color-brand-black: #000000;
 }
 
 @layer base {
@@ -122,22 +117,6 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: #c3cad5 transparent;
-  }
-}
-
-/* Slow drift for the login wave (removed in phase 3); off for users who prefer less motion */
-@media (prefers-reduced-motion: no-preference) {
-  .brand-wave {
-    animation: brand-wave-drift 18s ease-in-out infinite alternate;
-    transform-origin: center;
-  }
-}
-@keyframes brand-wave-drift {
-  from {
-    transform: translateY(-12px) scaleY(1);
-  }
-  to {
-    transform: translateY(16px) scaleY(1.06);
   }
 }
 

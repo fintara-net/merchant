@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
-import { Check, Circle, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Check, Circle, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { AuthHeading, AuthLayout } from '@/components/layout/auth-layout'
 import { Field } from '@/components/ui/field'
 import { FormError } from '@/components/ui/form-error'
 import { Input } from '@/components/ui/input'
-import { BRAND } from '@/config/brand'
 import { authKeys, sessionQueryOptions } from '@/features/auth/api'
 import { SignOutLink } from '@/features/auth/components/sign-out-link'
 import {
@@ -45,33 +44,28 @@ function ChangePasswordPage() {
   const forced = user.mustChangePassword
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-background px-4 py-10">
-      <div className="w-full max-w-md">
-        <p className="mb-4 text-center text-sm font-semibold text-primary">{BRAND.name}</p>
-        <Card>
-          <CardContent className="p-6 sm:p-8">
-            <h1 className="text-xl font-bold tracking-tight">
-              {forced ? 'Choose your password' : 'Change password'}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted">
-              {forced
-                ? "You signed in with a temporary password. Choose your own to continue. You'll stay signed in here, and any other devices will be signed out."
-                : "Other devices will be signed out. You'll stay signed in here."}
-            </p>
-            <ChangePasswordForm />
-          </CardContent>
-        </Card>
-        <p className="mt-4 text-center text-sm text-muted">
-          {forced ? (
-            <SignOutLink />
-          ) : (
-            <Link to="/" className="hover:text-foreground">
-              Back to dashboard
-            </Link>
-          )}
-        </p>
-      </div>
-    </main>
+    <AuthLayout
+      footer={
+        forced ? (
+          <SignOutLink />
+        ) : (
+          <Link to="/" className="hover:text-foreground hover:underline">
+            Back to the dashboard
+          </Link>
+        )
+      }
+    >
+      <AuthHeading
+        step={forced && !user.twoFactorEnabled ? 'Step 1 of 2' : undefined}
+        title={forced ? 'Choose your password' : 'Change password'}
+        description={
+          forced
+            ? "You signed in with a temporary password. Choose your own to continue. Other devices will be signed out; you'll stay signed in here."
+            : "Other devices will be signed out. You'll stay signed in here."
+        }
+      />
+      <ChangePasswordForm />
+    </AuthLayout>
   )
 }
 
@@ -110,14 +104,13 @@ function ChangePasswordForm() {
       id={name}
       type={show ? 'text' : 'password'}
       autoComplete={autoComplete}
-      className="h-11"
       aria-invalid={!!errors[name]}
       {...form.register(name)}
     />
   )
 
   return (
-    <form noValidate className="mt-6 flex flex-col gap-5" onSubmit={form.handleSubmit(submit)}>
+    <form noValidate className="flex flex-col gap-5" onSubmit={form.handleSubmit(submit)}>
       <Field id="currentPassword" label="Current password" error={errors.currentPassword}>
         {passwordInput('currentPassword', 'current-password')}
       </Field>
@@ -156,8 +149,7 @@ function ChangePasswordForm() {
 
       <FormError message={errors.root?.message} />
 
-      <Button type="submit" className="h-11 font-semibold" disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+      <Button type="submit" className="h-10" loading={isSubmitting}>
         {isSubmitting ? 'Saving…' : 'Save password'}
       </Button>
     </form>
