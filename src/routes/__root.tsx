@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react'
 import { Logo } from '@/components/brand/logo'
 import { BrandWave } from '@/components/brand/wave'
 import { buttonVariants } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/toast'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -31,6 +32,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />
+      <Toaster />
       <Suspense>
         <Devtools />
       </Suspense>

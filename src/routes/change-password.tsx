@@ -134,7 +134,7 @@ function ChangePasswordForm() {
               key={rule.label}
               className={cn(
                 'flex items-center gap-1.5',
-                ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted',
+                ok ? 'text-success' : 'text-muted',
               )}
             >
               {ok ? <Check className="size-3.5" /> : <Circle className="size-3.5" />}

@@ -209,7 +209,7 @@ function IconAction({
         'grid size-7 place-items-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-primary [&>svg]:size-3.5',
         tone === 'primary' && 'bg-primary/10 text-primary hover:bg-primary/20',
         tone === 'danger' && 'bg-danger/10 text-danger hover:bg-danger/20',
-        tone === 'success' && 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20',
+        tone === 'success' && 'bg-success-soft text-success hover:bg-success/15',
       )}
     >
       {children}

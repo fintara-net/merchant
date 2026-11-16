@@ -2,16 +2,17 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
+/** Status label for table cells, e.g. Active, Locked, Declined. */
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+  'inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-semibold whitespace-nowrap',
   {
     variants: {
       tone: {
-        neutral: 'bg-foreground/8 text-muted',
-        brand: 'bg-primary/12 text-primary',
-        success: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-        warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
-        danger: 'bg-danger/15 text-danger',
+        neutral: 'bg-accent text-muted',
+        brand: 'bg-info-soft text-primary',
+        success: 'bg-success-soft text-success',
+        warning: 'bg-warning-soft text-warning',
+        danger: 'bg-danger-soft text-danger',
       },
     },
     defaultVariants: { tone: 'neutral' },

@@ -52,7 +52,7 @@ function TwoFactorPage() {
       {status.data && (
         <div className="flex flex-col gap-8">
           <div className="flex items-start gap-3 rounded-xl border p-4">
-            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-700 dark:text-emerald-400" />
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-success" />
             <div className="text-sm">
               <p className="font-semibold">On</p>
               {status.data.enabledAt && (

@@ -22,7 +22,7 @@ export function Notice({ message }: { message: string | null }) {
   return (
     <div role="status" aria-live="polite">
       {message && (
-        <p className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400">
+        <p className="mb-4 flex items-center gap-2 rounded-md border border-success/25 bg-success-soft px-3 py-2 text-sm text-success">
           <CircleCheck className="size-4 shrink-0" />
           {message}
         </p>

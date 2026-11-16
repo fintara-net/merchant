@@ -3,9 +3,9 @@ import type { ManagedUser } from '../schemas'
 
 export function UserStatusBadge({ user }: { user: Pick<ManagedUser, 'status' | 'locked'> }) {
   const { label, tone } = user.locked
-    ? { label: 'Locked', tone: 'bg-amber-500/12 text-amber-700 dark:text-amber-400' }
+    ? { label: 'Locked', tone: 'bg-warning-soft text-warning' }
     : user.status === 'active'
-      ? { label: 'Active', tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' }
+      ? { label: 'Active', tone: 'bg-success-soft text-success' }
       : { label: 'Inactive', tone: 'bg-foreground/8 text-muted' }
 
   return (

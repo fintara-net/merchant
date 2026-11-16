@@ -1,63 +1,131 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/montserrat';
+@import '@fontsource-variable/public-sans/wght.css';
 
-/* Semantic design tokens — switch automatically with the OS theme */
+/*
+ * Fintara "bank statement" design tokens. Light only: the dashboard is used in daylit offices.
+ * Navy carries the shell and page bands, gold only marks where you are, and green/red are
+ * reserved for approved/credit and declined/debit.
+ */
 :root {
-  /* Neutrals carry a faint purple tint so they sit well next to the brand colors */
-  --background: oklch(0.978 0.006 285);
-  --foreground: oklch(0.18 0.02 285);
-  --surface: #ffffff;
-  --muted: oklch(0.52 0.02 285);
-  --border: oklch(0.91 0.012 285);
-  --accent: oklch(0.95 0.025 285); /* soft purple fill for hovers and table headers */
-  /* 1BNPL brand guideline: #3e3bca primary, #796dff secondary */
-  --primary: #3e3bca;
-  --primary-foreground: #ffffff;
-  --danger: oklch(0.58 0.22 27);
-}
+  color-scheme: light;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Built on the brand black */
-    --background: #07070b;
-    --foreground: oklch(0.96 0.005 285);
-    --surface: oklch(0.17 0.015 285);
-    --muted: oklch(0.7 0.02 285);
-    --border: oklch(0.27 0.02 285);
-    --accent: oklch(0.23 0.04 285);
-    --primary: #796dff;
-    --primary-foreground: #0b0a1f; /* dark text keeps contrast on the lighter purple */
-    --danger: oklch(0.68 0.2 25);
-  }
+  /* Ground and surfaces */
+  --background: #f4f6f8;
+  --surface: #ffffff;
+  --surface-sunken: #f8f9fb; /* table header row, read-only fields */
+  --foreground: #14192a;
+  --muted: #566073; /* secondary text: 5.9:1 on white */
+  --border: #dce1e8;
+  --rule: #e8ecf1; /* table row rules, lighter than borders */
+  --accent: #eef2f7; /* hover fill */
+
+  /* Statement navy: sidebar, page bands, primary buttons */
+  --navy: #14284b;
+  --navy-raised: #1d3763;
+  --on-navy: #ffffff;
+  --on-navy-muted: #b7c3d9; /* 8:1 on navy */
+  --gold: #c79a2b; /* current-place marker only, never text on white */
+
+  --primary: #1d3763;
+  --primary-hover: #14284b;
+  --primary-foreground: #ffffff;
+  --ring: #2f62c9;
+
+  /* States */
+  --success: #1f7046;
+  --success-soft: #e3f1e9;
+  --warning: #8a5a00;
+  --warning-soft: #fbf0d9;
+  --danger: #b23a2a;
+  --danger-soft: #fbe8e4;
+  --info-soft: #e7eef9;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-rule: var(--rule);
   --color-accent: var(--accent);
+  --color-navy: var(--navy);
+  --color-navy-raised: var(--navy-raised);
+  --color-on-navy: var(--on-navy);
+  --color-on-navy-muted: var(--on-navy-muted);
+  --color-gold: var(--gold);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
-  --font-sans: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-danger-soft: var(--danger-soft);
+  --color-info-soft: var(--info-soft);
+
+  --font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Crisp, statement-like corners */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  /* Fixed product type scale (no fluid sizes) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.625rem;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.875rem;
+
+  /* Kept until the sign-in screens are redesigned (phase 3) */
   --color-brand-400: #796dff;
   --color-brand-600: #3e3bca;
   --color-brand-black: #000000;
-  --color-brand-ink: #0b0a1f;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    font-size: 100%;
+  }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-base text-foreground antialiased;
+    font-feature-settings: 'tnum' 1; /* figures line up in columns everywhere */
+    caret-color: var(--primary);
+  }
+  ::selection {
+    background: #c9d7f0;
+    color: var(--foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+  /* Thin, quiet scrollbars that match the palette */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #c3cad5 transparent;
   }
 }
 
-/* Slow drift for the login wave; disabled for users who prefer less motion */
+/* Slow drift for the login wave (removed in phase 3); off for users who prefer less motion */
 @media (prefers-reduced-motion: no-preference) {
   .brand-wave {
     animation: brand-wave-drift 18s ease-in-out infinite alternate;
@@ -73,23 +141,49 @@
   }
 }
 
-/* Dialog entrance */
+/* Overlays: dialogs fade in, side panels slide from the right */
 @media (prefers-reduced-motion: no-preference) {
   dialog[open] {
-    animation: dialog-in 160ms ease-out;
+    animation: dialog-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   dialog[open]::backdrop {
     animation: backdrop-in 160ms ease-out;
+  }
+  dialog[data-variant='sheet'][open] {
+    animation: sheet-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .toast-enter {
+    animation: toast-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .skeleton {
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
   }
 }
 @keyframes dialog-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(6px);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
   }
 }
 @keyframes backdrop-in {
   from {
     opacity: 0;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
   }
 }

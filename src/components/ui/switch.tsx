@@ -14,16 +14,16 @@ export function Switch({ checked, onCheckedChange, className, ...props }: Switch
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50',
-        checked ? 'bg-primary' : 'bg-foreground/20',
+        'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        checked ? 'bg-primary' : 'bg-[#b9c1cd]',
         className,
       )}
       {...props}
     >
       <span
         className={cn(
-          'inline-block size-5 rounded-full bg-white shadow-sm transition-transform',
-          checked ? 'translate-x-5.5' : 'translate-x-0.5',
+          'inline-block size-4 rounded-full bg-white shadow-[0_1px_2px_rgb(20_25_42/0.25)] transition-transform',
+          checked ? 'translate-x-4.5' : 'translate-x-0.5',
         )}
       />
     </button>

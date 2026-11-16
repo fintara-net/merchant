@@ -1,11 +1,22 @@
 import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
+/** White panel with a hairline border. Panels never nest inside each other. */
 export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
+      className={cn('overflow-hidden rounded-lg border border-border bg-surface', className)}
+      {...props}
+    />
+  )
+}
+
+/** Panel title row; the navy rule underneath echoes a statement's section heading. */
+export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <div
       className={cn(
-        'overflow-hidden rounded-2xl border bg-surface shadow-sm shadow-brand-600/5',
+        'flex min-h-12 flex-wrap items-center gap-3 border-b-2 border-navy px-4 py-2.5',
         className,
       )}
       {...props}
@@ -13,19 +24,10 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
   )
 }
 
-export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('flex flex-col gap-1 p-5 pb-0', className)} {...props} />
-}
-
-export function CardTitle({ className, ...props }: ComponentProps<'h3'>) {
-  return (
-    <h3
-      className={cn('text-xs font-semibold tracking-wide text-muted uppercase', className)}
-      {...props}
-    />
-  )
+export function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
+  return <h2 className={cn('text-base font-semibold', className)} {...props} />
 }
 
 export function CardContent({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('p-5', className)} {...props} />
+  return <div className={cn('p-4', className)} {...props} />
 }

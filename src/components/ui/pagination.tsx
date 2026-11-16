@@ -88,7 +88,7 @@ export function Pagination({
             aria-label="Rows per page"
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-9"
+            className="h-8"
           >
             {pageSizeOptions.map((n) => (
               <option key={n} value={n}>
@@ -123,10 +123,10 @@ function PageButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'grid size-8 place-items-center rounded-md text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40',
+        'grid h-8 min-w-8 place-items-center rounded-md px-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-40',
         active
           ? 'bg-primary text-primary-foreground'
-          : 'bg-accent text-foreground hover:bg-primary/10 hover:text-primary',
+          : 'border border-border bg-surface text-foreground hover:bg-accent',
       )}
     >
       {children}

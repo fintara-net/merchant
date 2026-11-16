@@ -23,7 +23,7 @@ export function Field({ id, label, optional = false, error, hint, children }: Fi
       </div>
       {children}
       {error ? (
-        <p className="text-xs text-danger">{error.message}</p>
+        <p className="text-xs font-medium text-danger">{error.message}</p>
       ) : (
         hint && <p className="text-xs text-muted">{hint}</p>
       )}

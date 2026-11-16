@@ -207,7 +207,7 @@ export function UserForm({
             )}
 
             {userType === 'super-admin' && (
-              <div className="flex gap-2 self-end rounded-lg bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+              <div className="flex gap-2 self-end rounded-lg bg-warning-soft p-3 text-xs text-warning">
                 <ShieldAlert className="size-4 shrink-0" />
                 Full access to all banks, merchants and users.
               </div>
