@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RowMenu } from '@/components/ui/row-menu'
 import { SortableTh, useSort } from '@/components/ui/sortable-th'
-import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
+import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
 import type { IssuingBank } from '../schemas'
 import { IssuingBankStatusBadge } from './status-badge'
 
@@ -88,7 +88,7 @@ export function IssuingBanksTable({
             {sorted.map((bank) => (
               <tr key={bank.id}>
                 <Td className="font-medium">{bank.name}</Td>
-                <Td className="font-mono text-sm tracking-wide">{bank.swiftCode}</Td>
+                <Td className="tracking-wide">{bank.swiftCode}</Td>
                 <Td>
                   <IssuingBankStatusBadge status={bank.status} />
                 </Td>
@@ -96,6 +96,11 @@ export function IssuingBanksTable({
               </tr>
             ))}
           </TBody>
+          <TFoot>
+            <tr>
+              <Td colSpan={onEdit ? 4 : 3}>{registerTotal(banks)}</Td>
+            </tr>
+          </TFoot>
         </Table>
       </div>
 
@@ -106,14 +111,23 @@ export function IssuingBanksTable({
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{bank.name}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs text-muted">{bank.swiftCode}</span>
+                <span className="text-xs tracking-wide text-muted">{bank.swiftCode}</span>
                 <IssuingBankStatusBadge status={bank.status} />
               </div>
             </div>
             {menu(bank)}
           </li>
         ))}
+        <li className="border-t-2 border-foreground/80 px-4 py-3 text-sm font-semibold">
+          {registerTotal(banks)}
+        </li>
       </ul>
     </>
   )
+}
+
+/** "Total, 3 banks, 2 active" for the foot of the register */
+function registerTotal(banks: IssuingBank[]) {
+  const active = banks.filter((b) => b.status === 'active').length
+  return `Total, ${banks.length} ${banks.length === 1 ? 'bank' : 'banks'}, ${active} active`
 }

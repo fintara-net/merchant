@@ -28,7 +28,10 @@ export const TBody = (p: ComponentProps<'tbody'>) => (
 export const TFoot = (p: ComponentProps<'tfoot'>) => (
   <tfoot
     {...p}
-    className={cn('border-t-2 border-foreground/80 bg-surface font-semibold', p.className)}
+    className={cn(
+      'border-t-2 border-foreground/80 bg-surface font-semibold [&_td]:border-b-[3px] [&_td]:border-double [&_td]:border-b-foreground/70',
+      p.className,
+    )}
   />
 )
 export const Th = (p: ComponentProps<'th'>) => (

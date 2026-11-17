@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
 import { SortableTh, useSort } from '@/components/ui/sortable-th'
-import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
+import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
 import { IssuingBankStatusBadge as StatusBadge } from '@/features/issuing-banks/components/status-badge'
 import type { Merchant } from '../schemas'
 
@@ -108,7 +108,7 @@ export function MerchantsTable({
                 <Td className="max-w-56 truncate font-medium" title={merchant.name}>
                   {merchant.name}
                 </Td>
-                <Td className="font-mono text-sm">{merchant.merchantCode}</Td>
+                <Td className="tracking-wide">{merchant.merchantCode}</Td>
                 <Td>{merchant.panNumber}</Td>
                 <Td className="max-w-56">
                   <span className="block truncate" title={merchant.email}>
@@ -126,6 +126,11 @@ export function MerchantsTable({
               </tr>
             ))}
           </TBody>
+          <TFoot>
+            <tr>
+              <Td colSpan={hasActions ? 7 : 6}>{registerTotal(merchants)}</Td>
+            </tr>
+          </TFoot>
         </Table>
       </div>
 
@@ -136,7 +141,7 @@ export function MerchantsTable({
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{merchant.name}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs text-muted">{merchant.merchantCode}</span>
+                <span className="text-xs tracking-wide text-muted">{merchant.merchantCode}</span>
                 <StatusBadge status={merchant.status} />
               </div>
               <p className="mt-1 truncate text-xs text-muted">
@@ -146,7 +151,16 @@ export function MerchantsTable({
             {menu(merchant)}
           </li>
         ))}
+        <li className="border-t-2 border-foreground/80 px-4 py-3 text-sm font-semibold">
+          {registerTotal(merchants)}
+        </li>
       </ul>
     </>
   )
+}
+
+/** "Total, 2 merchants, 1 active" for the foot of the register */
+function registerTotal(merchants: Merchant[]) {
+  const active = merchants.filter((m) => m.status === 'active').length
+  return `Total, ${merchants.length} ${merchants.length === 1 ? 'merchant' : 'merchants'}, ${active} active`
 }

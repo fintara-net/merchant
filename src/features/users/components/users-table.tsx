@@ -13,8 +13,8 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
-import { SkeletonRows } from '@/components/ui/skeleton'
-import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
+import { Skeleton, SkeletonRows } from '@/components/ui/skeleton'
+import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { useOrganisationName } from '../organisation'
 import { fullName, USER_TYPE_LABELS, type ManagedUser } from '../schemas'
@@ -135,70 +135,120 @@ export function UsersTable({
   }
 
   return (
-    <Table>
-      <THead>
-        <tr>
-          <Th className="w-10">
-            <Checkbox
-              aria-label="Select all users on this page"
-              checked={allSelected}
-              indeterminate={selectedOnPage > 0 && !allSelected}
-              disabled={users.length === 0}
-              onChange={toggleAll}
-            />
-          </Th>
-          <Th>Name</Th>
-          <Th>Username</Th>
-          <Th>Contact</Th>
-          <Th>Type</Th>
-          <Th>Organisation</Th>
-          <Th>Status</Th>
-          {actions && (
-            <Th className="w-14">
-              <span className="sr-only">Actions</span>
-            </Th>
-          )}
-        </tr>
-      </THead>
-      <TBody>
-        {loading ? (
-          <SkeletonRows rows={6} columns={actions ? COLUMNS : COLUMNS - 1} />
-        ) : (
-          users.map((u) => (
-            <tr key={u.id} className={cn(selected.has(u.id) && 'bg-primary-soft')}>
-              <Td>
+    <>
+      {/* Phone: one row per user */}
+      <ul className="divide-y divide-rule md:hidden">
+        {loading
+          ? [1, 2, 3].map((i) => (
+              <li key={i} className="flex flex-col gap-2 px-4 py-3">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3 w-56" />
+              </li>
+            ))
+          : users.map((u) => (
+              <li key={u.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{fullName(u)}</p>
+                  <p className="truncate text-xs text-muted">
+                    {u.username}, {USER_TYPE_LABELS[u.userType]}, {organisationName(u)}
+                  </p>
+                  <div className="mt-1">
+                    <UserStatusBadge user={u} />
+                  </div>
+                </div>
+                {actions && <RowMenu label={`Actions for ${u.username}`} items={menuItems(u)} />}
+              </li>
+            ))}
+      </ul>
+
+      {/* Tablet & desktop: table */}
+      <div className="hidden md:block">
+        <Table>
+          <THead>
+            <tr>
+              <Th className="w-10">
                 <Checkbox
-                  aria-label={`Select ${u.username}`}
-                  checked={selected.has(u.id)}
-                  onChange={() => toggleOne(u.id)}
+                  aria-label="Select all users on this page"
+                  checked={allSelected}
+                  indeterminate={selectedOnPage > 0 && !allSelected}
+                  disabled={users.length === 0}
+                  onChange={toggleAll}
                 />
-              </Td>
-              <Td className="max-w-44 truncate font-medium" title={fullName(u)}>
-                {fullName(u)}
-              </Td>
-              <Td>{u.username}</Td>
-              <Td className="max-w-56">
-                <span className="block truncate" title={u.email}>
-                  {u.email}
-                </span>
-                <span className="block text-xs text-muted">{u.phoneNumber}</span>
-              </Td>
-              <Td>{USER_TYPE_LABELS[u.userType]}</Td>
-              <Td className="max-w-44 truncate" title={organisationName(u)}>
-                {organisationName(u)}
-              </Td>
-              <Td>
-                <UserStatusBadge user={u} />
-              </Td>
+              </Th>
+              <Th>Name</Th>
+              <Th>Username</Th>
+              <Th>Contact</Th>
+              <Th>Type</Th>
+              <Th>Organisation</Th>
+              <Th>Status</Th>
               {actions && (
-                <Td className="py-1.5 text-right">
-                  <RowMenu label={`Actions for ${u.username}`} items={menuItems(u)} />
-                </Td>
+                <Th className="w-14">
+                  <span className="sr-only">Actions</span>
+                </Th>
               )}
             </tr>
-          ))
-        )}
-      </TBody>
-    </Table>
+          </THead>
+          <TBody>
+            {loading ? (
+              <SkeletonRows rows={6} columns={actions ? COLUMNS : COLUMNS - 1} />
+            ) : (
+              users.map((u) => (
+                <tr key={u.id} className={cn(selected.has(u.id) && 'bg-primary-soft')}>
+                  <Td>
+                    <Checkbox
+                      aria-label={`Select ${u.username}`}
+                      checked={selected.has(u.id)}
+                      onChange={() => toggleOne(u.id)}
+                    />
+                  </Td>
+                  <Td className="max-w-44 truncate font-medium" title={fullName(u)}>
+                    {fullName(u)}
+                  </Td>
+                  <Td>{u.username}</Td>
+                  <Td className="max-w-56">
+                    <span className="block truncate" title={u.email}>
+                      {u.email}
+                    </span>
+                    <span className="block text-xs text-muted">{u.phoneNumber}</span>
+                  </Td>
+                  <Td>{USER_TYPE_LABELS[u.userType]}</Td>
+                  <Td className="max-w-44 truncate" title={organisationName(u)}>
+                    {organisationName(u)}
+                  </Td>
+                  <Td>
+                    <UserStatusBadge user={u} />
+                  </Td>
+                  {actions && (
+                    <Td className="py-1.5 text-right">
+                      <RowMenu label={`Actions for ${u.username}`} items={menuItems(u)} />
+                    </Td>
+                  )}
+                </tr>
+              ))
+            )}
+          </TBody>
+          {!loading && (
+            <TFoot>
+              <tr>
+                <Td colSpan={actions ? COLUMNS : COLUMNS - 1}>{pageTotal(users)}</Td>
+              </tr>
+            </TFoot>
+          )}
+        </Table>
+      </div>
+    </>
+  )
+}
+
+/**
+ * "This page, 10 users, 8 active, 1 locked" for the foot of the register. "Active" means the
+ * same as the page band's figure (status active); locked is counted separately.
+ */
+function pageTotal(users: ManagedUser[]) {
+  const active = users.filter((u) => u.status === 'active').length
+  const locked = users.filter((u) => u.locked).length
+  return (
+    `This page, ${users.length} ${users.length === 1 ? 'user' : 'users'}, ${active} active` +
+    (locked > 0 ? `, ${locked} locked` : '')
   )
 }

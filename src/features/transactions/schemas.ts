@@ -38,10 +38,10 @@ export const SEARCH_FIELD_LABELS: Record<SearchField, string> = {
 }
 
 export const SEARCH_FIELD_PLACEHOLDERS: Record<SearchField, string> = {
-  tid: 'Search by terminal ID',
-  rrn: 'Search by RRN or reference',
-  card: 'Search by card number',
-  store: 'Search by store name',
+  tid: 'Enter terminal ID',
+  rrn: 'Enter RRN or reference',
+  card: 'Enter card number',
+  store: 'Enter store name',
 }
 
 export const PAGE_SIZES = [10, 25, 50] as const

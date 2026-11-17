@@ -46,10 +46,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       </header>
       <main className="grid flex-1 place-items-center p-6">
         <div className="w-full max-w-md rounded-lg border border-border bg-surface px-6 py-8 text-center">
-          <p className="text-sm font-semibold text-muted">Error 404</p>
-          <h1 className="mt-1 text-2xl font-semibold">This page doesn't exist</h1>
+          <h1 className="text-2xl font-semibold">This page doesn't exist</h1>
           <p className="mt-2 text-sm text-muted">
-            The link may be old or mistyped. Check the address, or go back to the dashboard.
+            The link may be old or mistyped (error 404). Check the address, or go back to the
+            dashboard.
           </p>
           <Link to="/" className={buttonVariants({ className: 'mt-6' })}>
             Back to the dashboard

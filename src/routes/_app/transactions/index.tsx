@@ -6,6 +6,7 @@ import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/ui/pagination'
 import { Segmented } from '@/components/ui/segmented'
+import { Select } from '@/components/ui/select'
 import { EmptyState } from '@/components/ui/table'
 import { sessionQueryOptions } from '@/features/auth/api'
 import { Can, PERMISSIONS, requirePermission } from '@/features/permissions'
@@ -23,6 +24,7 @@ import {
   TransactionsTable,
   transactionScope,
   transactionsQueryOptions,
+  type DateRange,
   type Transaction,
   type TransactionSearch,
 } from '@/features/transactions'
@@ -36,6 +38,15 @@ export const Route = createFileRoute('/_app/transactions/')({
 
 const RANGE_OPTIONS = DATE_RANGES.map((r) => ({ value: r, label: DATE_RANGE_LABELS[r] }))
 const COUNT = new Intl.NumberFormat('en-IN')
+
+/** "No transactions …" reads naturally for every period */
+const PERIOD_PHRASE: Record<DateRange, string> = {
+  today: 'today',
+  yesterday: 'yesterday',
+  '7d': 'in the last 7 days',
+  '30d': 'in the last 30 days',
+  month: 'this month',
+}
 
 function TransactionsPage() {
   const search = Route.useSearch()
@@ -71,19 +82,13 @@ function TransactionsPage() {
     void navigate({ search: (prev) => ({ range: prev.range, pageSize: prev.pageSize }) })
 
   const period = DATE_RANGE_LABELS[range]
-  const description = [
-    scope.organisationName ?? 'All banks and merchants',
-    period,
-    data ? `${COUNT.format(total)} ${total === 1 ? 'transaction' : 'transactions'}` : null,
-  ]
-    .filter(Boolean)
-    .join(', ')
+  const description = `${scope.organisationName ?? 'All banks and merchants'}, ${period.toLowerCase()}`
 
   const empty = filtered ? (
     <EmptyState
       icon={<SearchX />}
       title="No transactions match these filters"
-      description={`Nothing in ${period.toLowerCase()} matches. Try another filter or a longer period.`}
+      description={`Nothing ${PERIOD_PHRASE[range]} matches. Try another filter or a longer period.`}
       action={
         <Button variant="outline" onClick={clearFilters}>
           Clear filters
@@ -93,7 +98,7 @@ function TransactionsPage() {
   ) : (
     <EmptyState
       icon={<ReceiptText />}
-      title={`No transactions for ${period.toLowerCase()}`}
+      title={`No transactions ${PERIOD_PHRASE[range]}`}
       description="Card and QR payments appear here as they are processed. Try a longer period if you expected some."
     />
   )
@@ -102,20 +107,46 @@ function TransactionsPage() {
     <Page
       title="Transactions"
       description={description}
+      figures={
+        data
+          ? [{ label: 'Transactions', value: COUNT.format(total), note: 'In this period' }]
+          : undefined
+      }
       bandAside={
-        <Segmented
-          label="Period"
-          options={RANGE_OPTIONS}
-          value={range}
-          onChange={(r) => update({ range: r })}
-          className="max-w-full overflow-x-auto"
-        />
+        <>
+          {/* Phone: a dropdown; the button strip doesn't fit */}
+          <div className="w-full sm:hidden">
+            <Select
+              aria-label="Period"
+              value={range}
+              onChange={(e) => update({ range: e.target.value as DateRange })}
+            >
+              {RANGE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Segmented
+            label="Period"
+            options={RANGE_OPTIONS}
+            value={range}
+            onChange={(r) => update({ range: r })}
+            className="hidden sm:inline-flex"
+          />
+        </>
       }
       toolbar={<TransactionSearchBar value={filters} onChange={update} />}
       actions={
         <Can permission={PERMISSIONS.TRANSACTIONS_EXPORT}>
           {/* Export is built once transactions are connected */}
-          <Button variant="outline" disabled title="Excel export isn't available yet">
+          <Button
+            variant="outline"
+            disabled
+            title="Excel export isn't available yet"
+            className="hidden sm:inline-flex"
+          >
             <FileSpreadsheet /> Export
           </Button>
         </Can>

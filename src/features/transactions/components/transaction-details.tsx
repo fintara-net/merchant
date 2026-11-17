@@ -81,7 +81,7 @@ export function TransactionDetails({
             </Row>
             <Row label="Approval code">{t.approvalCode}</Row>
             <Row label="Card">
-              <span className="font-mono">{maskCardNumber(t.cardNumber)}</span>
+              <span className="tracking-wide">{maskCardNumber(t.cardNumber)}</span>
             </Row>
             {showBank && <Row label="Issuing bank">{t.bankName}</Row>}
             <Row label="Payment mode">{PAYMENT_MODE_LABELS[t.paymentMode]}</Row>

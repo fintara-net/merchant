@@ -1,4 +1,3 @@
-import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { SkeletonRows } from '@/components/ui/skeleton'
@@ -43,7 +42,7 @@ export function TransactionsTable({
 }: TransactionsTableProps) {
   if (!loading && transactions.length === 0) return empty
 
-  const columns = hideBankColumn ? 8 : 9
+  const columns = hideBankColumn ? 7 : 8
   const successful = transactions.filter((t) => t.status === 'success').length
 
   return (
@@ -61,9 +60,6 @@ export function TransactionsTable({
               <Th>Card</Th>
               <Th>Status</Th>
               <Th className="text-right">Amount (NPR)</Th>
-              <Th className="w-10">
-                <span className="sr-only">Details</span>
-              </Th>
             </tr>
           </THead>
           <TBody>
@@ -82,10 +78,23 @@ export function TransactionsTable({
                     </span>
                   </Td>
                   <Td>{t.terminalId}</Td>
-                  <Td>{t.rrn}</Td>
+                  <Td>
+                    {/* The whole row opens on click; the reference is the keyboard route to it */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpen(t)
+                      }}
+                      aria-label={`Details for ${t.rrn}`}
+                      className="rounded-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {t.rrn}
+                    </button>
+                  </Td>
                   {!hideBankColumn && <Td>{t.bankName}</Td>}
                   <Td>
-                    <span className="block font-mono text-sm">{maskCardNumber(t.cardNumber)}</span>
+                    <span className="block tracking-wide">{maskCardNumber(t.cardNumber)}</span>
                     <span className="block text-xs text-muted">
                       {PAYMENT_MODE_LABELS[t.paymentMode]}
                     </span>
@@ -103,20 +112,6 @@ export function TransactionsTable({
                     {formatMoney(t.amount)}
                     {t.currency !== 'NPR' && ` ${t.currency}`}
                   </Td>
-                  <Td className="py-1.5">
-                    {/* The row opens on click; this button is the keyboard route to it */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onOpen(t)
-                      }}
-                      aria-label={`Details for ${t.rrn}`}
-                      className="grid size-8 place-items-center rounded-md text-muted hover:bg-accent hover:text-foreground"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </Td>
                 </tr>
               ))
             )}
@@ -124,11 +119,10 @@ export function TransactionsTable({
           {!loading && (
             <TFoot>
               <tr>
-                <Td colSpan={columns - 2}>
+                <Td colSpan={columns - 1}>
                   Page total, {successful} successful of {transactions.length}
                 </Td>
                 <Td className="text-right">{formatMoney(pageTotal(transactions))}</Td>
-                <Td />
               </tr>
             </TFoot>
           )}

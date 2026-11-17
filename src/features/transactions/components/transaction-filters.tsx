@@ -97,7 +97,7 @@ export function TransactionFilters({
           onChange({ mode: (e.target.value || undefined) as PaymentMode | undefined })
         }
       >
-        <option value="">All payment modes</option>
+        <option value="">All modes</option>
         {PAYMENT_MODES.map((m) => (
           <option key={m} value={m}>
             {PAYMENT_MODE_LABELS[m]}

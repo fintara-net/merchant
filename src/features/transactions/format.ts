@@ -1,4 +1,4 @@
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+import { formatDateTime } from '@/lib/utils'
 
 /** 500000 (paisa) → "NPR. 5,000". Uses Nepali/Indian digit grouping (1,00,000). */
 export function formatAmount(minor: number, currency = 'NPR') {
@@ -17,15 +17,7 @@ export function formatMoney(minor: number) {
 }
 
 /** ISO date → "2026-Oct-28 11:07 AM" in the viewer's local time */
-export function formatTransactionDate(iso: string) {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return '—'
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours24 = d.getHours()
-  const hours = String(hours24 % 12 || 12).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  return `${d.getFullYear()}-${MONTHS[d.getMonth()]}-${day} ${hours}:${minutes} ${hours24 < 12 ? 'AM' : 'PM'}`
-}
+export const formatTransactionDate = formatDateTime
 
 /**
  * Safety net: never show a full card number even if one slips through.

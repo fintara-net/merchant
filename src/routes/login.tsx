@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Info } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -28,7 +28,11 @@ import { applyFormErrors, formErrorsFrom } from '@/lib/form-errors'
 import { safeRedirect } from '@/lib/utils'
 
 export const Route = createFileRoute('/login')({
-  validateSearch: z.object({ redirect: z.string().optional() }),
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+    /** Set when the session ended while the user was working */
+    expired: z.boolean().optional().catch(undefined),
+  }),
   component: LoginPage,
 })
 
@@ -42,6 +46,7 @@ function LoginPage() {
 
 /** Password first; then, for accounts with 2FA, the code from the authenticator app. */
 function SignIn() {
+  const { expired } = Route.useSearch()
   const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null)
   // Why the user is back at the password step (e.g. the code step timed out)
   const [restartReason, setRestartReason] = useState<string | null>(null)
@@ -60,6 +65,7 @@ function SignIn() {
   return (
     <LoginForm
       notice={restartReason}
+      sessionEnded={!!expired && restartReason === null}
       onCodeRequired={(c) => {
         setRestartReason(null)
         setChallenge(c)
@@ -83,9 +89,12 @@ function useFinishSignIn() {
 
 function LoginForm({
   notice,
+  sessionEnded,
   onCodeRequired,
 }: {
   notice: string | null
+  /** Signed out while working: say so calmly, it isn't an error */
+  sessionEnded: boolean
   onCodeRequired: (challenge: TwoFactorChallenge) => void
 }) {
   const finish = useFinishSignIn()
@@ -117,6 +126,15 @@ function LoginForm({
         <div className="mb-5">
           <FormError message={notice} />
         </div>
+      )}
+      {sessionEnded && !notice && !mutation.isError && (
+        <p
+          role="status"
+          className="mb-5 flex items-start gap-2 rounded-md border border-primary-soft-border bg-primary-soft px-3 py-2.5 text-sm"
+        >
+          <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          Your session ended, so you were signed out. Sign in again to continue.
+        </p>
       )}
 
       <form

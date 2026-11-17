@@ -1,15 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { Loader2, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { CircleAlert, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { Page } from '@/components/layout/page'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { FormError } from '@/components/ui/form-error'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/table'
+import { toast } from '@/components/ui/toast'
 import { sessionQueryOptions } from '@/features/auth/api'
 import { RecoveryCodes } from '@/features/auth/components/recovery-codes'
 import {
@@ -20,7 +24,7 @@ import {
 } from '@/features/auth/two-factor'
 import { isUnauthorized } from '@/lib/api-client'
 import { applyFormErrors, formErrorsFrom } from '@/lib/form-errors'
-import { formatDateTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 /** The signed-in user's 2FA: when it was turned on, and new recovery codes. */
 export const Route = createFileRoute('/_app/two-factor')({
@@ -35,76 +39,107 @@ function TwoFactorPage() {
   const status = useQuery(twoFactorStatusQueryOptions)
   const queryClient = useQueryClient()
   const [newCodes, setNewCodes] = useState<string[] | null>(null)
+  const left = status.data?.recoveryCodesLeft
+  const low = left !== undefined && left <= LOW_RECOVERY_CODES
 
   return (
     <Page
       title="Two-factor authentication"
       description="You sign in with your password and a code from your authenticator app."
-      className="max-w-2xl"
+      figures={
+        status.data
+          ? [
+              { label: 'Status', value: 'On' },
+              ...(status.data.enabledAt
+                ? [{ label: 'Turned on', value: formatDate(status.data.enabledAt) }]
+                : []),
+              {
+                label: 'Recovery codes left',
+                value: `${status.data.recoveryCodesLeft} of 10`,
+              },
+            ]
+          : undefined
+      }
+      panel={false}
+      className="max-w-3xl"
     >
       {status.isPending && (
-        <p className="flex items-center gap-2 text-sm text-muted">
-          <Loader2 className="size-4 animate-spin" /> Loading…
-        </p>
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-72" />
+          </CardContent>
+        </Card>
       )}
-      {status.isError && <FormError message="Couldn't load your two-factor settings." />}
+      {status.isError && (
+        <Card>
+          <EmptyState
+            icon={<CircleAlert />}
+            title="Couldn't load your two-factor settings"
+            description="Check your connection, then try again."
+            action={
+              <Button variant="outline" onClick={() => void status.refetch()}>
+                Try again
+              </Button>
+            }
+          />
+        </Card>
+      )}
 
       {status.data && (
-        <div className="flex flex-col gap-8">
-          <div className="flex items-start gap-3 rounded-xl border p-4">
-            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-success" />
-            <div className="text-sm">
-              <p className="font-semibold">On</p>
-              {status.data.enabledAt && (
-                <p className="text-muted">Since {formatDateTime(status.data.enabledAt)}</p>
-              )}
-              <p className="mt-2 text-muted">
-                {user.userType === 'super-admin'
-                  ? 'Lost your phone? Sign in with a recovery code. Without one, it can be reset on the server (see the README).'
-                  : 'Lost your phone? Sign in with a recovery code, or ask your administrator to reset two-factor authentication so you can set it up again.'}
-              </p>
-            </div>
-          </div>
-
-          <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Recovery codes</h2>
-            {newCodes ? (
-              <>
-                <p className="text-sm text-muted">
-                  Your old codes no longer work. Save these new ones; they won&apos;t be shown
-                  again.
-                </p>
-                <RecoveryCodes
-                  codes={newCodes}
-                  accountName={user.username}
-                  doneLabel="Done"
-                  onDone={() => {
-                    setNewCodes(null)
-                    void queryClient.invalidateQueries({ queryKey: twoFactorKeys.status() })
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <p
-                  className={
-                    status.data.recoveryCodesLeft <= LOW_RECOVERY_CODES
-                      ? 'flex items-center gap-2 text-sm text-danger'
-                      : 'text-sm text-muted'
-                  }
-                >
-                  {status.data.recoveryCodesLeft <= LOW_RECOVERY_CODES && (
-                    <TriangleAlert className="size-4 shrink-0" />
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recovery codes</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {newCodes ? (
+                <>
+                  <p className="text-sm text-muted">
+                    Your old codes no longer work. Save these new ones; they won&apos;t be shown
+                    again.
+                  </p>
+                  <RecoveryCodes
+                    codes={newCodes}
+                    accountName={user.username}
+                    doneLabel="Done"
+                    onDone={() => {
+                      setNewCodes(null)
+                      toast.success('New recovery codes saved')
+                      void queryClient.invalidateQueries({ queryKey: twoFactorKeys.status() })
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  {low && (
+                    <p className="flex items-center gap-2 rounded-md border border-warning/25 bg-warning-soft px-3 py-2 text-sm text-warning">
+                      <TriangleAlert className="size-4 shrink-0" />
+                      Only {status.data.recoveryCodesLeft} left. Get a new set so you don&apos;t run
+                      out.
+                    </p>
                   )}
-                  {status.data.recoveryCodesLeft} of 10 unused.
-                  {status.data.recoveryCodesLeft <= LOW_RECOVERY_CODES &&
-                    ' Get a new set so you don’t run out.'}
-                </p>
-                <RegenerateForm onDone={setNewCodes} />
-              </>
-            )}
-          </section>
-        </div>
+                  <p className="text-sm text-muted">
+                    Each code signs you in once if you can&apos;t use your authenticator app.
+                    Getting a new set makes all your current codes stop working.
+                  </p>
+                  <RegenerateForm onDone={setNewCodes} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Lost your phone?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted">
+              {user.userType === 'super-admin'
+                ? 'Sign in with a recovery code. Without one, ask the person who runs the Fintara server to reset your two-factor sign-in.'
+                : 'Sign in with a recovery code, or ask your administrator to reset two-factor sign-in so you can set it up again on a new phone.'}
+            </CardContent>
+          </Card>
+        </>
       )}
     </Page>
   )
@@ -138,14 +173,7 @@ function RegenerateForm({ onDone }: { onDone: (codes: string[]) => void }) {
   }
 
   return (
-    <form
-      noValidate
-      className="mt-2 grid gap-4 rounded-xl border p-4 sm:grid-cols-2"
-      onSubmit={form.handleSubmit(submit)}
-    >
-      <p className="text-sm text-muted sm:col-span-2">
-        Getting new codes makes all your current ones stop working.
-      </p>
+    <form noValidate className="grid gap-4 sm:grid-cols-2" onSubmit={form.handleSubmit(submit)}>
       <Field id="password" label="Password" error={errors.password}>
         <Input
           id="password"
@@ -162,7 +190,7 @@ function RegenerateForm({ onDone }: { onDone: (codes: string[]) => void }) {
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={7}
-          className="font-mono tracking-widest tabular-nums"
+          className="tracking-widest"
           aria-invalid={!!errors.code}
           {...form.register('code')}
         />
@@ -174,9 +202,8 @@ function RegenerateForm({ onDone }: { onDone: (codes: string[]) => void }) {
         type="submit"
         variant="outline"
         className="sm:col-span-2 sm:justify-self-start"
-        disabled={isSubmitting}
+        loading={isSubmitting}
       >
-        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
         Get new recovery codes
       </Button>
     </form>

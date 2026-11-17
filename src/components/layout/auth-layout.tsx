@@ -27,7 +27,7 @@ export function AuthLayout({ children, footer, wide = false }: AuthLayoutProps) 
             Transactions and access for banks and merchants, in one statement.
           </p>
           <p className="mt-4 flex items-start gap-2.5 text-sm text-muted">
-            <LockKeyhole aria-hidden className="mt-0.5 size-4 shrink-0 text-gold" />
+            <LockKeyhole aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
             Every account signs in with a password and a code from an authenticator app.
           </p>
         </div>
