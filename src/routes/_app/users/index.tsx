@@ -215,7 +215,6 @@ function UsersPage() {
   return (
     <Page
       title="User management"
-      description="People who can sign in to the dashboard, and what they can see."
       figures={
         data
           ? [

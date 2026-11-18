@@ -45,7 +45,6 @@ function TwoFactorPage() {
   return (
     <Page
       title="Two-factor authentication"
-      description="You sign in with your password and a code from your authenticator app."
       figures={
         status.data
           ? [

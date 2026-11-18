@@ -90,7 +90,6 @@ function MerchantsPage() {
   return (
     <Page
       title="Merchants"
-      description="Businesses that accept card payments through Fintara, and their logins."
       figures={[
         { label: 'Merchants', value: merchants.length },
         { label: 'Active', value: activeCount },

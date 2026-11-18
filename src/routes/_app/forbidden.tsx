@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/table'
 
 export const Route = createFileRoute('/_app/forbidden')({
   component: () => (
-    <Page title="No access" description="Your role doesn't include this page.">
+    <Page title="No access">
       <EmptyState
         icon={<ShieldX />}
         title="You don't have access to this page"

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RowMenu } from '@/components/ui/row-menu'
 import { SortableTh, useSort } from '@/components/ui/sortable-th'
-import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import type { IssuingBank } from '../schemas'
 import { IssuingBankStatusBadge } from './status-badge'
 
@@ -96,11 +96,6 @@ export function IssuingBanksTable({
               </tr>
             ))}
           </TBody>
-          <TFoot>
-            <tr>
-              <Td colSpan={onEdit ? 4 : 3}>{registerTotal(banks)}</Td>
-            </tr>
-          </TFoot>
         </Table>
       </div>
 
@@ -118,16 +113,7 @@ export function IssuingBanksTable({
             {menu(bank)}
           </li>
         ))}
-        <li className="border-t-2 border-foreground/80 px-4 py-3 text-sm font-semibold">
-          {registerTotal(banks)}
-        </li>
       </ul>
     </>
   )
-}
-
-/** "Total, 3 banks, 2 active" for the foot of the register */
-function registerTotal(banks: IssuingBank[]) {
-  const active = banks.filter((b) => b.status === 'active').length
-  return `Total, ${banks.length} ${banks.length === 1 ? 'bank' : 'banks'}, ${active} active`
 }

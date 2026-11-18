@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
 import { SortableTh, useSort } from '@/components/ui/sortable-th'
-import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import { IssuingBankStatusBadge as StatusBadge } from '@/features/issuing-banks/components/status-badge'
 import type { Merchant } from '../schemas'
 
@@ -126,11 +126,6 @@ export function MerchantsTable({
               </tr>
             ))}
           </TBody>
-          <TFoot>
-            <tr>
-              <Td colSpan={hasActions ? 7 : 6}>{registerTotal(merchants)}</Td>
-            </tr>
-          </TFoot>
         </Table>
       </div>
 
@@ -151,16 +146,7 @@ export function MerchantsTable({
             {menu(merchant)}
           </li>
         ))}
-        <li className="border-t-2 border-foreground/80 px-4 py-3 text-sm font-semibold">
-          {registerTotal(merchants)}
-        </li>
       </ul>
     </>
   )
-}
-
-/** "Total, 2 merchants, 1 active" for the foot of the register */
-function registerTotal(merchants: Merchant[]) {
-  const active = merchants.filter((m) => m.status === 'active').length
-  return `Total, ${merchants.length} ${merchants.length === 1 ? 'merchant' : 'merchants'}, ${active} active`
 }

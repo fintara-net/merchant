@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RowMenu, type RowMenuItem } from '@/components/ui/row-menu'
 import { Skeleton, SkeletonRows } from '@/components/ui/skeleton'
-import { EmptyState, Table, TBody, Td, TFoot, Th, THead } from '@/components/ui/table'
+import { EmptyState, Table, TBody, Td, Th, THead } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { useOrganisationName } from '../organisation'
 import { fullName, USER_TYPE_LABELS, type ManagedUser } from '../schemas'
@@ -227,28 +227,8 @@ export function UsersTable({
               ))
             )}
           </TBody>
-          {!loading && (
-            <TFoot>
-              <tr>
-                <Td colSpan={actions ? COLUMNS : COLUMNS - 1}>{pageTotal(users)}</Td>
-              </tr>
-            </TFoot>
-          )}
         </Table>
       </div>
     </>
-  )
-}
-
-/**
- * "This page, 10 users, 8 active, 1 locked" for the foot of the register. "Active" means the
- * same as the page band's figure (status active); locked is counted separately.
- */
-function pageTotal(users: ManagedUser[]) {
-  const active = users.filter((u) => u.status === 'active').length
-  const locked = users.filter((u) => u.locked).length
-  return (
-    `This page, ${users.length} ${users.length === 1 ? 'user' : 'users'}, ${active} active` +
-    (locked > 0 ? `, ${locked} locked` : '')
   )
 }

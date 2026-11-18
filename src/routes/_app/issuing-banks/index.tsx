@@ -79,7 +79,6 @@ function IssuingBanksPage() {
   return (
     <Page
       title="Issuing banks"
-      description="Card-issuing banks on Fintara and whether they are active."
       figures={[
         { label: 'Banks', value: banks.length },
         { label: 'Active', value: activeCount },
